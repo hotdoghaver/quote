@@ -332,7 +332,7 @@
         let services = [];
         let selectedServices = [];
         let currentArea = 0;
-        let map, drawingManager, polygon;
+        let map, drawnItems;
         
         // DOM Elements
         const navQuote = document.getElementById('nav-quote');
@@ -668,96 +668,148 @@
             quoteResult.classList.add('hidden');
         });
         
-        // Area Calculator
-        function initMap() {
-            if (window.google && window.google.maps) {
-                loadMap();
-                return;
-            }
-            
-            if (!document.getElementById('google-maps-script')) {
-                const script = document.createElement('script');
-                script.id = 'google-maps-script';
-                script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyCuLSgjE6yYsAiyV8fwLS8oMnmRC8auLxs&libraries=drawing,places&callback=loadMap';
-                script.async = true;
-                script.defer = true;
-                document.head.appendChild(script);
-            }
-        }
+        // OpenStreetMap with Leaflet implementation
+        let drawnItems;
         
-        window.loadMap = function() {
+        function initMap() {
             if (!map) {
-                map = new google.maps.Map(document.getElementById('map'), {
-                    center: { lat: 37.7749, lng: -122.4194 },
-                    zoom: 15
-                });
+                // Initialize the map
+                map = L.map('map').setView([37.7749, -122.4194], 15);
                 
-                // Initialize drawing manager
-                drawingManager = new google.maps.drawing.DrawingManager({
-                    drawingMode: google.maps.drawing.OverlayType.POLYGON,
-                    drawingControl: true,
-                    drawingControlOptions: {
-                        position: google.maps.ControlPosition.TOP_CENTER,
-                        drawingModes: [google.maps.drawing.OverlayType.POLYGON]
+                // Add OpenStreetMap tile layer
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(map);
+                
+                // Initialize FeatureGroup for the drawn items (polygons)
+                drawnItems = new L.FeatureGroup();
+                map.addLayer(drawnItems);
+                
+                // Initialize the draw control
+                const drawControl = new L.Control.Draw({
+                    draw: {
+                        polyline: false,
+                        rectangle: false,
+                        circle: false,
+                        circlemarker: false,
+                        marker: false,
+                        polygon: {
+                            allowIntersection: false,
+                            drawError: {
+                                color: '#e1e100',
+                                message: '<strong>Error:</strong> Polygon edges cannot cross!'
+                            },
+                            shapeOptions: {
+                                color: '#1e88e5'
+                            }
+                        }
+                    },
+                    edit: {
+                        featureGroup: drawnItems,
+                        remove: true
                     }
                 });
-                drawingManager.setMap(map);
+                map.addControl(drawControl);
                 
-                // Add event listener for when polygon is complete
-                google.maps.event.addListener(drawingManager, 'polygoncomplete', function(poly) {
-                    polygon = poly;
-                    const area = google.maps.geometry.spherical.computeArea(polygon.getPath());
-                    const areaInSqFt = Math.round(area * 10.764); // Convert m² to ft²
+                // Event handler for when drawing is completed
+                map.on('draw:created', function(e) {
+                    const layer = e.layer;
+                    
+                    // Clear previous polygons
+                    drawnItems.clearLayers();
+                    
+                    // Add the new polygon
+                    drawnItems.addLayer(layer);
+                    
+                    // Calculate the area (in square meters)
+                    const areaInSqMeters = L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
+                    const areaInSqFt = Math.round(areaInSqMeters * 10.764); // Convert m² to ft²
+                    
                     calculatedArea.textContent = `${areaInSqFt} sq ft`;
                     currentArea = areaInSqFt;
                 });
                 
-                // Initialize search box
-                const searchInput = document.getElementById('search-address');
-                const searchBox = new google.maps.places.SearchBox(searchInput);
-                
-                map.addListener('bounds_changed', function() {
-                    searchBox.setBounds(map.getBounds());
-                });
-                
-                searchBox.addListener('places_changed', function() {
-                    const places = searchBox.getPlaces();
-                    if (places.length === 0) {
-                        return;
-                    }
+                // Event handler for when a shape is edited
+                map.on('draw:edited', function(e) {
+                    const layers = e.layers;
+                    let areaInSqFt = 0;
                     
-                    const bounds = new google.maps.LatLngBounds();
-                    places.forEach(function(place) {
-                        if (!place.geometry) {
-                            console.log("Returned place contains no geometry");
-                            return;
-                        }
-                        
-                        if (place.geometry.viewport) {
-                            bounds.union(place.geometry.viewport);
-                        } else {
-                            bounds.extend(place.geometry.location);
-                        }
+                    layers.eachLayer(function(layer) {
+                        const areaInSqMeters = L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
+                        areaInSqFt = Math.round(areaInSqMeters * 10.764); // Convert m² to ft²
                     });
-                    map.fitBounds(bounds);
+                    
+                    calculatedArea.textContent = `${areaInSqFt} sq ft`;
+                    currentArea = areaInSqFt;
                 });
                 
+                // Event handler for when a shape is deleted
+                map.on('draw:deleted', function(e) {
+                    calculatedArea.textContent = '0 sq ft';
+                    currentArea = 0;
+                });
+                
+                // Add geocoding control (address search)
+                const geocoder = L.Control.geocoder({
+                    defaultMarkGeocode: false
+                }).addTo(map);
+                
+                geocoder.on('markgeocode', function(e) {
+                    const bbox = e.geocode.bbox;
+                    const poly = L.polygon([
+                        bbox.getSouthEast(),
+                        bbox.getNorthEast(),
+                        bbox.getNorthWest(),
+                        bbox.getSouthWest()
+                    ]);
+                    
+                    map.fitBounds(poly.getBounds());
+                });
+                
+                // Add search button functionality
                 document.getElementById('search-button').addEventListener('click', function() {
-                    const places = searchBox.getPlaces();
-                    if (!places || places.length === 0) {
-                        const geocoder = new google.maps.Geocoder();
-                        geocoder.geocode({ address: searchInput.value }, function(results, status) {
-                            if (status === 'OK') {
-                                map.setCenter(results[0].geometry.location);
-                                map.setZoom(18); // Zoom in for better area selection
-                            } else {
-                                alert('Geocode was not successful for the following reason: ' + status);
-                            }
-                        });
+                    const address = document.getElementById('search-address').value;
+                    if (address) {
+                        // Use the geocoder control to search
+                        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data && data.length > 0) {
+                                    const lat = parseFloat(data[0].lat);
+                                    const lon = parseFloat(data[0].lon);
+                                    map.setView([lat, lon], 18);
+                                } else {
+                                    alert('Address not found. Please try again.');
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error searching for address:', error);
+                                alert('Error searching for address. Please try again.');
+                            });
                     }
                 });
+                
+                // Add Leaflet.GeometryUtil for area calculations if not already present
+                if (!L.GeometryUtil) {
+                    L.GeometryUtil = {
+                        geodesicArea: function(latLngs) {
+                            let area = 0;
+                            const d2r = Math.PI / 180;
+                            let p1, p2;
+                            
+                            for (let i = 0, len = latLngs.length, j = len - 1; i < len; j = i++) {
+                                p1 = latLngs[i];
+                                p2 = latLngs[j];
+                                area += ((p2.lng - p1.lng) * d2r) * 
+                                        (2 + Math.sin(p1.lat * d2r) + Math.sin(p2.lat * d2r));
+                            }
+                            area = area * 6378137.0 * 6378137.0 / 2.0;
+                            return Math.abs(area);
+                        }
+                    };
+                }
             }
-        };
+        }
         
         // Use calculated area
         useArea.addEventListener('click', () => {
@@ -769,9 +821,8 @@
         
         // Reset area
         resetArea.addEventListener('click', () => {
-            if (polygon) {
-                polygon.setMap(null);
-                polygon = null;
+            if (drawnItems) {
+                drawnItems.clearLayers();
             }
             calculatedArea.textContent = '0 sq ft';
             currentArea = 0;
@@ -816,32 +867,13 @@
         });
     </script>
     
-    <!-- Placeholder for Google Maps API -->
-    <script>
-        // This is a fallback for Google Maps functionality
-        // Note: For a production app, you would need to include a valid Google Maps API key
-        if (typeof window.loadMap !== 'function') {
-            window.loadMap = function() {
-                const mapContainer = document.getElementById('map');
-                mapContainer.innerHTML = `
-                    <div style="background-color: #eee; height: 300px; display: flex; justify-content: center; align-items: center; text-align: center; padding: 20px;">
-                        <div>
-                            <p>Map functionality requires a Google Maps API key.</p>
-                            <p>For now, you can use the custom area input on the quote page.</p>
-                        </div>
-                    </div>
-                `;
-                
-                document.getElementById('search-button').addEventListener('click', function() {
-                    alert('Map functionality requires a Google Maps API key.');
-                });
-                
-                document.getElementById('use-area').addEventListener('click', function() {
-                    showPage(quotePage);
-                    setActiveNav(navQuote);
-                });
-            };
-        }
-    </script>
+    <!-- Leaflet CSS and JS for OpenStreetMap -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-draw/1.0.4/leaflet.draw.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-draw/1.0.4/leaflet.draw.js"></script>
+    <!-- Geocoding for address search -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-control-geocoder/2.4.0/Control.Geocoder.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-control-geocoder/2.4.0/Control.Geocoder.js"></script>
 </body>
 </html>
