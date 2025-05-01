@@ -332,7 +332,8 @@
         let services = [];
         let selectedServices = [];
         let currentArea = 0;
-        let map, drawnItems;
+        let map = null;
+        let drawnItems = null;
         
         // DOM Elements
         const navQuote = document.getElementById('nav-quote');
@@ -669,11 +670,10 @@
         });
         
         // OpenStreetMap with Leaflet implementation
-        let drawnItems;
-        
         function initMap() {
+            // Initialize map only once
             if (!map) {
-                // Initialize the map
+                // Create the map in the 'map' div
                 map = L.map('map').setView([37.7749, -122.4194], 15);
                 
                 // Add OpenStreetMap tile layer
@@ -684,6 +684,26 @@
                 // Initialize FeatureGroup for the drawn items (polygons)
                 drawnItems = new L.FeatureGroup();
                 map.addLayer(drawnItems);
+                
+                // Add Leaflet.GeometryUtil for area calculations if not already present
+                if (!L.GeometryUtil) {
+                    L.GeometryUtil = {
+                        geodesicArea: function(latLngs) {
+                            let area = 0;
+                            const d2r = Math.PI / 180;
+                            let p1, p2;
+                            
+                            for (let i = 0, len = latLngs.length, j = len - 1; i < len; j = i++) {
+                                p1 = latLngs[i];
+                                p2 = latLngs[j];
+                                area += ((p2.lng - p1.lng) * d2r) * 
+                                        (2 + Math.sin(p1.lat * d2r) + Math.sin(p2.lat * d2r));
+                            }
+                            area = area * 6378137.0 * 6378137.0 / 2.0;
+                            return Math.abs(area);
+                        }
+                    };
+                }
                 
                 // Initialize the draw control
                 const drawControl = new L.Control.Draw({
@@ -789,25 +809,15 @@
                     }
                 });
                 
-                // Add Leaflet.GeometryUtil for area calculations if not already present
-                if (!L.GeometryUtil) {
-                    L.GeometryUtil = {
-                        geodesicArea: function(latLngs) {
-                            let area = 0;
-                            const d2r = Math.PI / 180;
-                            let p1, p2;
-                            
-                            for (let i = 0, len = latLngs.length, j = len - 1; i < len; j = i++) {
-                                p1 = latLngs[i];
-                                p2 = latLngs[j];
-                                area += ((p2.lng - p1.lng) * d2r) * 
-                                        (2 + Math.sin(p1.lat * d2r) + Math.sin(p2.lat * d2r));
-                            }
-                            area = area * 6378137.0 * 6378137.0 / 2.0;
-                            return Math.abs(area);
-                        }
-                    };
-                }
+                // Fix for map rendering issues
+                setTimeout(function() {
+                    map.invalidateSize();
+                }, 100);
+            } else {
+                // If map already exists, just invalidate size to ensure proper rendering
+                setTimeout(function() {
+                    map.invalidateSize();
+                }, 100);
             }
         }
         
@@ -821,11 +831,11 @@
         
         // Reset area
         resetArea.addEventListener('click', () => {
-            if (drawnItems) {
+            if (drawnItems && map) {
                 drawnItems.clearLayers();
+                calculatedArea.textContent = '0 sq ft';
+                currentArea = 0;
             }
-            calculatedArea.textContent = '0 sq ft';
-            currentArea = 0;
         });
         
         // Add example services
