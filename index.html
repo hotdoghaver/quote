@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PowerWash Pro - Quote Generator</title>
+    <style>
+        :root {
+            --primary: #1e88e5;
+            --primary-dark: #1565c0;
+            --accent: #ff9800;
+            --light-bg: #f5f5f5;
+            --dark-text: #333;
+            --light-text: #fff;
+            --shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--light-bg);
+            color: var(--dark-text);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 100%;
+            padding: 1rem;
+            margin: 0 auto;
+        }
+        
+        header {
+            background-color: var(--primary);
+            color: var(--light-text);
+            padding: 1rem;
+            text-align: center;
+            box-shadow: var(--shadow);
+        }
+        
+        nav {
+            background-color: var(--primary-dark);
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+        
+        nav a {
+            float: left;
+            display: block;
+            color: var(--light-text);
+            text-align: center;
+            padding: 0.8rem 1rem;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: background-color 0.3s;
+        }
+        
+        nav a:hover, nav a.active {
+            background-color: var(--accent);
+        }
+        
+        h1, h2, h3 {
+            margin-bottom: 1rem;
+        }
+        
+        button, .btn {
+            background-color: var(--primary);
+            color: var(--light-text);
+            border: none;
+            padding: 0.7rem 1rem;
+            margin: 0.5rem 0;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover, .btn:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 0.7rem;
+            margin: 0.5rem 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        label {
+            display: block;
+            margin-top: 0.8rem;
+            font-weight: bold;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .service-item {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            background-color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .service-info {
+            flex-grow: 1;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        
+        th, td {
+            padding: 0.7rem;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: var(--light-bg);
+        }
+        
+        #map {
+            width: 100%;
+            height: 300px;
+            margin: 1rem 0;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+        }
+        
+        .total {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-top: 1rem;
+            text-align: right;
+        }
+        
+        .btn-small {
+            padding: 0.3rem 0.7rem;
+            font-size: 0.8rem;
+        }
+        
+        .btn-danger {
+            background-color: #f44336;
+        }
+        
+        .btn-danger:hover {
+            background-color: #d32f2f;
+        }
+        
+        @media screen and (min-width: 768px) {
+            .container {
+                max-width: 800px;
+            }
+            
+            nav a {
+                padding: 1rem 1.5rem;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>PowerWash Pro</h1>
+        <p>Quote Generator</p>
+    </header>
+    
+    <nav>
+        <a href="#" id="nav-quote" class="active">Create Quote</a>
+        <a href="#" id="nav-services">Manage Services</a>
+        <a href="#" id="nav-calculator">Area Calculator</a>
+    </nav>
+    
+    <div class="container">
+        <!-- Quote Generator Page -->
+        <div id="quote-page">
+            <div class="card">
+                <h2>Create New Quote</h2>
+                <div class="form-group">
+                    <label for="customer-name">Customer Name:</label>
+                    <input type="text" id="customer-name" placeholder="Enter customer name">
+                </div>
+                
+                <div class="form-group">
+                    <label for="customer-email">Customer Email:</label>
+                    <input type="email" id="customer-email" placeholder="Enter customer email">
+                </div>
+                
+                <div class="form-group">
+                    <label for="customer-phone">Customer Phone:</label>
+                    <input type="tel" id="customer-phone" placeholder="Enter customer phone">
+                </div>
+                
+                <div class="form-group">
+                    <label for="property-address">Property Address:</label>
+                    <input type="text" id="property-address" placeholder="Enter property address">
+                </div>
+                
+                <h3>Select Services</h3>
+                <div id="service-selection">
+                    <p>No services available. Add services in the Manage Services section.</p>
+                </div>
+                
+                <div class="form-group">
+                    <label for="custom-area">Custom Area (sq ft):</label>
+                    <input type="number" id="custom-area" placeholder="Enter area in square feet" value="0">
+                    <button id="open-calculator" class="btn">Calculate Area</button>
+                </div>
+                
+                <div class="form-group">
+                    <label for="notes">Additional Notes:</label>
+                    <textarea id="notes" rows="3" style="width: 100%; padding: 0.7rem; margin: 0.5rem 0; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+                </div>
+                
+                <div class="total">
+                    Total: $<span id="quote-total">0.00</span>
+                </div>
+                
+                <button id="generate-quote" class="btn">Generate Quote</button>
+            </div>
+            
+            <div id="quote-result" class="card hidden">
+                <h2>Quote Summary</h2>
+                <div id="quote-details"></div>
+                <button id="copy-quote" class="btn">Copy to Clipboard</button>
+                <button id="new-quote" class="btn">Create New Quote</button>
+            </div>
+        </div>
+        
+        <!-- Manage Services Page -->
+        <div id="services-page" class="hidden">
+            <div class="card">
+                <h2>Manage Services</h2>
+                <form id="add-service-form">
+                    <div class="form-group">
+                        <label for="service-name">Service Name:</label>
+                        <input type="text" id="service-name" required placeholder="e.g., House Exterior Wash">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="price-type">Price Type:</label>
+                        <select id="price-type">
+                            <option value="flat">Flat Rate</option>
+                            <option value="sqft">Per Square Foot</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="service-price">Price ($):</label>
+                        <input type="number" id="service-price" step="0.01" required placeholder="Enter price">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="service-description">Description:</label>
+                        <textarea id="service-description" rows="2" placeholder="Enter service description" style="width: 100%; padding: 0.7rem; margin: 0.5rem 0; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn">Add Service</button>
+                </form>
+            </div>
+            
+            <div class="card">
+                <h2>Your Services</h2>
+                <div id="services-list">
+                    <p>No services available. Add your first service above.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Area Calculator Page -->
+        <div id="calculator-page" class="hidden">
+            <div class="card">
+                <h2>Area Calculator</h2>
+                <p>Use the map to calculate the area of a property:</p>
+                
+                <div id="map"></div>
+                
+                <div class="form-group">
+                    <label for="search-address">Search Address:</label>
+                    <input id="search-address" type="text" placeholder="Enter address to search">
+                    <button id="search-button" class="btn">Search</button>
+                </div>
+                
+                <div class="instructions">
+                    <p>Instructions:</p>
+                    <ol>
+                        <li>Search for a property address</li>
+                        <li>Click on the map to create points around the area</li>
+                        <li>Complete the polygon by clicking on the first point</li>
+                        <li>The calculated area will appear below</li>
+                    </ol>
+                </div>
+                
+                <div class="form-group">
+                    <label>Calculated Area:</label>
+                    <p id="calculated-area">0 sq ft</p>
+                    <button id="use-area" class="btn">Use This Area</button>
+                    <button id="reset-area" class="btn btn-danger">Reset</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let services = [];
+        let selectedServices = [];
+        let currentArea = 0;
+        let map, drawingManager, polygon;
+        
+        // DOM Elements
+        const navQuote = document.getElementById('nav-quote');
+        const navServices = document.getElementById('nav-services');
+        const navCalculator = document.getElementById('nav-calculator');
+        const quotePage = document.getElementById('quote-page');
+        const servicesPage = document.getElementById('services-page');
+        const calculatorPage = document.getElementById('calculator-page');
+        const serviceSelection = document.getElementById('service-selection');
+        const servicesList = document.getElementById('services-list');
+        const quoteTotal = document.getElementById('quote-total');
+        const customArea = document.getElementById('custom-area');
+        const openCalculator = document.getElementById('open-calculator');
+        const useArea = document.getElementById('use-area');
+        const resetArea = document.getElementById('reset-area');
+        const calculatedArea = document.getElementById('calculated-area');
+        const generateQuote = document.getElementById('generate-quote');
+        const quoteResult = document.getElementById('quote-result');
+        const quoteDetails = document.getElementById('quote-details');
+        const copyQuote = document.getElementById('copy-quote');
+        const newQuote = document.getElementById('new-quote');
+        const addServiceForm = document.getElementById('add-service-form');
+        
+        // Navigation
+        navQuote.addEventListener('click', (e) => {
+            e.preventDefault();
+            showPage(quotePage);
+            setActiveNav(navQuote);
+        });
+        
+        navServices.addEventListener('click', (e) => {
+            e.preventDefault();
+            showPage(servicesPage);
+            setActiveNav(navServices);
+        });
+        
+        navCalculator.addEventListener('click', (e) => {
+            e.preventDefault();
+            showPage(calculatorPage);
+            setActiveNav(navCalculator);
+            initMap();
+        });
+        
+        openCalculator.addEventListener('click', (e) => {
+            e.preventDefault();
+            showPage(calculatorPage);
+            setActiveNav(navCalculator);
+            initMap();
+        });
+        
+        function showPage(page) {
+            quotePage.classList.add('hidden');
+            servicesPage.classList.add('hidden');
+            calculatorPage.classList.add('hidden');
+            page.classList.remove('hidden');
+        }
+        
+        function setActiveNav(navLink) {
+            navQuote.classList.remove('active');
+            navServices.classList.remove('active');
+            navCalculator.classList.remove('active');
+            navLink.classList.add('active');
+        }
+        
+        // Load services from local storage
+        function loadServices() {
+            const storedServices = localStorage.getItem('powerwashServices');
+            if (storedServices) {
+                services = JSON.parse(storedServices);
+                renderServicesList();
+                renderServiceSelection();
+            }
+        }
+        
+        // Save services to local storage
+        function saveServices() {
+            localStorage.setItem('powerwashServices', JSON.stringify(services));
+        }
+        
+        // Add a new service
+        addServiceForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('service-name').value.trim();
+            const priceType = document.getElementById('price-type').value;
+            const price = parseFloat(document.getElementById('service-price').value);
+            const description = document.getElementById('service-description').value.trim();
+            
+            if (name && price) {
+                const newService = {
+                    id: Date.now().toString(),
+                    name,
+                    priceType,
+                    price,
+                    description
+                };
+                
+                services.push(newService);
+                saveServices();
+                renderServicesList();
+                renderServiceSelection();
+                
+                // Reset form
+                addServiceForm.reset();
+            }
+        });
+        
+        // Render services list
+        function renderServicesList() {
+            if (services.length === 0) {
+                servicesList.innerHTML = '<p>No services available. Add your first service above.</p>';
+                return;
+            }
+            
+            servicesList.innerHTML = '';
+            services.forEach(service => {
+                const serviceItem = document.createElement('div');
+                serviceItem.className = 'service-item';
+                
+                const serviceInfo = document.createElement('div');
+                serviceInfo.className = 'service-info';
+                
+                const priceText = service.priceType === 'flat' 
+                    ? `$${service.price.toFixed(2)}` 
+                    : `$${service.price.toFixed(2)} per sq ft`;
+                
+                serviceInfo.innerHTML = `
+                    <h3>${service.name}</h3>
+                    <p>${priceText}</p>
+                    <p>${service.description}</p>
+                `;
+                
+                const actionButtons = document.createElement('div');
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'btn btn-danger btn-small';
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.addEventListener('click', () => {
+                    deleteService(service.id);
+                });
+                
+                actionButtons.appendChild(deleteBtn);
+                serviceItem.appendChild(serviceInfo);
+                serviceItem.appendChild(actionButtons);
+                servicesList.appendChild(serviceItem);
+            });
+        }
+        
+        // Delete a service
+        function deleteService(id) {
+            services = services.filter(service => service.id !== id);
+            saveServices();
+            renderServicesList();
+            renderServiceSelection();
+            calculateTotal();
+        }
+        
+        // Render service selection for quotes
+        function renderServiceSelection() {
+            if (services.length === 0) {
+                serviceSelection.innerHTML = '<p>No services available. Add services in the Manage Services section.</p>';
+                return;
+            }
+            
+            serviceSelection.innerHTML = '';
+            services.forEach(service => {
+                const serviceCheck = document.createElement('div');
+                serviceCheck.className = 'form-group';
+                
+                const priceText = service.priceType === 'flat' 
+                    ? `$${service.price.toFixed(2)}` 
+                    : `$${service.price.toFixed(2)} per sq ft`;
+                
+                serviceCheck.innerHTML = `
+                    <label>
+                        <input type="checkbox" class="service-checkbox" data-id="${service.id}">
+                        ${service.name} (${priceText})
+                    </label>
+                `;
+                
+                serviceSelection.appendChild(serviceCheck);
+            });
+            
+            // Add event listeners to checkboxes
+            document.querySelectorAll('.service-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', () => {
+                    updateSelectedServices();
+                    calculateTotal();
+                });
+            });
+        }
+        
+        // Update selected services array based on checkboxes
+        function updateSelectedServices() {
+            selectedServices = [];
+            document.querySelectorAll('.service-checkbox:checked').forEach(checkbox => {
+                const serviceId = checkbox.getAttribute('data-id');
+                const service = services.find(s => s.id === serviceId);
+                if (service) {
+                    selectedServices.push(service);
+                }
+            });
+        }
+        
+        // Calculate total quote amount
+        function calculateTotal() {
+            let total = 0;
+            const area = parseFloat(customArea.value) || 0;
+            
+            selectedServices.forEach(service => {
+                if (service.priceType === 'flat') {
+                    total += service.price;
+                } else {
+                    total += service.price * area;
+                }
+            });
+            
+            quoteTotal.textContent = total.toFixed(2);
+            return total;
+        }
+        
+        // Listen for custom area changes
+        customArea.addEventListener('input', calculateTotal);
+        
+        // Generate Quote
+        generateQuote.addEventListener('click', () => {
+            const customerName = document.getElementById('customer-name').value.trim();
+            const customerEmail = document.getElementById('customer-email').value.trim();
+            const customerPhone = document.getElementById('customer-phone').value.trim();
+            const propertyAddress = document.getElementById('property-address').value.trim();
+            const notes = document.getElementById('notes').value.trim();
+            const area = parseFloat(customArea.value) || 0;
+            const total = calculateTotal();
+            
+            if (!customerName) {
+                alert('Please enter a customer name.');
+                return;
+            }
+            
+            if (selectedServices.length === 0) {
+                alert('Please select at least one service.');
+                return;
+            }
+            
+            const date = new Date().toLocaleDateString();
+            
+            let quoteHTML = `
+                <div style="margin-bottom: 1rem;">
+                    <strong>Date:</strong> ${date}<br>
+                    <strong>Customer:</strong> ${customerName}<br>
+                    ${customerEmail ? `<strong>Email:</strong> ${customerEmail}<br>` : ''}
+                    ${customerPhone ? `<strong>Phone:</strong> ${customerPhone}<br>` : ''}
+                    ${propertyAddress ? `<strong>Address:</strong> ${propertyAddress}<br>` : ''}
+                    ${area > 0 ? `<strong>Area:</strong> ${area} sq ft<br>` : ''}
+                </div>
+                
+                <h3>Selected Services:</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Service</th>
+                            <th>Price</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            selectedServices.forEach(service => {
+                let serviceTotal;
+                let priceText;
+                
+                if (service.priceType === 'flat') {
+                    serviceTotal = service.price;
+                    priceText = `$${service.price.toFixed(2)}`;
+                } else {
+                    serviceTotal = service.price * area;
+                    priceText = `$${service.price.toFixed(2)} per sq ft × ${area} sq ft`;
+                }
+                
+                quoteHTML += `
+                    <tr>
+                        <td>${service.name}</td>
+                        <td>${priceText}</td>
+                        <td>$${serviceTotal.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+            
+            quoteHTML += `
+                    </tbody>
+                </table>
+                
+                <div class="total">
+                    <strong>Total Amount: $${total.toFixed(2)}</strong>
+                </div>
+                
+                ${notes ? `<div style="margin-top: 1rem;"><strong>Notes:</strong><br>${notes}</div>` : ''}
+            `;
+            
+            quoteDetails.innerHTML = quoteHTML;
+            quoteResult.classList.remove('hidden');
+        });
+        
+        // Copy quote to clipboard
+        copyQuote.addEventListener('click', () => {
+            const quoteText = quoteDetails.innerText;
+            navigator.clipboard.writeText(quoteText)
+                .then(() => {
+                    alert('Quote copied to clipboard');
+                })
+                .catch(err => {
+                    console.error('Failed to copy quote: ', err);
+                    alert('Failed to copy quote. Try selecting and copying manually.');
+                });
+        });
+        
+        // New quote button
+        newQuote.addEventListener('click', () => {
+            document.getElementById('customer-name').value = '';
+            document.getElementById('customer-email').value = '';
+            document.getElementById('customer-phone').value = '';
+            document.getElementById('property-address').value = '';
+            document.getElementById('notes').value = '';
+            customArea.value = '0';
+            
+            document.querySelectorAll('.service-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            
+            selectedServices = [];
+            calculateTotal();
+            quoteResult.classList.add('hidden');
+        });
+        
+        // Area Calculator
+        function initMap() {
+            if (window.google && window.google.maps) {
+                loadMap();
+                return;
+            }
+            
+            if (!document.getElementById('google-maps-script')) {
+                const script = document.createElement('script');
+                script.id = 'google-maps-script';
+                script.src = 'https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=drawing,places&callback=loadMap';
+                script.async = true;
+                script.defer = true;
+                document.head.appendChild(script);
+            }
+        }
+        
+        window.loadMap = function() {
+            if (!map) {
+                map = new google.maps.Map(document.getElementById('map'), {
+                    center: { lat: 37.7749, lng: -122.4194 },
+                    zoom: 15
+                });
+                
+                // Initialize drawing manager
+                drawingManager = new google.maps.drawing.DrawingManager({
+                    drawingMode: google.maps.drawing.OverlayType.POLYGON,
+                    drawingControl: true,
+                    drawingControlOptions: {
+                        position: google.maps.ControlPosition.TOP_CENTER,
+                        drawingModes: [google.maps.drawing.OverlayType.POLYGON]
+                    }
+                });
+                drawingManager.setMap(map);
+                
+                // Add event listener for when polygon is complete
+                google.maps.event.addListener(drawingManager, 'polygoncomplete', function(poly) {
+                    polygon = poly;
+                    const area = google.maps.geometry.spherical.computeArea(polygon.getPath());
+                    const areaInSqFt = Math.round(area * 10.764); // Convert m² to ft²
+                    calculatedArea.textContent = `${areaInSqFt} sq ft`;
+                    currentArea = areaInSqFt;
+                });
+                
+                // Initialize search box
+                const searchInput = document.getElementById('search-address');
+                const searchBox = new google.maps.places.SearchBox(searchInput);
+                
+                map.addListener('bounds_changed', function() {
+                    searchBox.setBounds(map.getBounds());
+                });
+                
+                searchBox.addListener('places_changed', function() {
+                    const places = searchBox.getPlaces();
+                    if (places.length === 0) {
+                        return;
+                    }
+                    
+                    const bounds = new google.maps.LatLngBounds();
+                    places.forEach(function(place) {
+                        if (!place.geometry) {
+                            console.log("Returned place contains no geometry");
+                            return;
+                        }
+                        
+                        if (place.geometry.viewport) {
+                            bounds.union(place.geometry.viewport);
+                        } else {
+                            bounds.extend(place.geometry.location);
+                        }
+                    });
+                    map.fitBounds(bounds);
+                });
+                
+                document.getElementById('search-button').addEventListener('click', function() {
+                    const places = searchBox.getPlaces();
+                    if (!places || places.length === 0) {
+                        const geocoder = new google.maps.Geocoder();
+                        geocoder.geocode({ address: searchInput.value }, function(results, status) {
+                            if (status === 'OK') {
+                                map.setCenter(results[0].geometry.location);
+                                map.setZoom(18); // Zoom in for better area selection
+                            } else {
+                                alert('Geocode was not successful for the following reason: ' + status);
+                            }
+                        });
+                    }
+                });
+            }
+        };
+        
+        // Use calculated area
+        useArea.addEventListener('click', () => {
+            customArea.value = currentArea;
+            showPage(quotePage);
+            setActiveNav(navQuote);
+            calculateTotal();
+        });
+        
+        // Reset area
+        resetArea.addEventListener('click', () => {
+            if (polygon) {
+                polygon.setMap(null);
+                polygon = null;
+            }
+            calculatedArea.textContent = '0 sq ft';
+            currentArea = 0;
+        });
+        
+        // Add example services
+        function addExampleServices() {
+            if (services.length === 0) {
+                services = [
+                    {
+                        id: '1',
+                        name: 'House Exterior Wash',
+                        priceType: 'flat',
+                        price: 150,
+                        description: 'Complete exterior house washing'
+                    },
+                    {
+                        id: '2',
+                        name: 'Driveway Cleaning',
+                        priceType: 'sqft',
+                        price: 0.40,
+                        description: 'Deep clean of concrete driveway surface'
+                    },
+                    {
+                        id: '3',
+                        name: 'Deck/Patio Cleaning',
+                        priceType: 'sqft',
+                        price: 0.50,
+                        description: 'Cleaning of wooden deck or stone patio'
+                    }
+                ];
+                saveServices();
+                renderServicesList();
+                renderServiceSelection();
+            }
+        }
+        
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', () => {
+            loadServices();
+            addExampleServices();
+        });
+    </script>
+    
+    <!-- Placeholder for Google Maps API -->
+    <script>
+        // This is a fallback for Google Maps functionality
+        // Note: For a production app, you would need to include a valid Google Maps API key
+        if (typeof window.loadMap !== 'function') {
+            window.loadMap = function() {
+                const mapContainer = document.getElementById('map');
+                mapContainer.innerHTML = `
+                    <div style="background-color: #eee; height: 300px; display: flex; justify-content: center; align-items: center; text-align: center; padding: 20px;">
+                        <div>
+                            <p>Map functionality requires a Google Maps API key.</p>
+                            <p>For now, you can use the custom area input on the quote page.</p>
+                        </div>
+                    </div>
+                `;
+                
+                document.getElementById('search-button').addEventListener('click', function() {
+                    alert('Map functionality requires a Google Maps API key.');
+                });
+                
+                document.getElementById('use-area').addEventListener('click', function() {
+                    showPage(quotePage);
+                    setActiveNav(navQuote);
+                });
+            };
+        }
+    </script>
+</body>
+</html>
