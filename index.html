@@ -1,8 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
+    <!-- Leaflet CSS and JS for OpenStreetMap -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-draw/1.0.4/leaflet.draw.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-draw/1.0.4/leaflet.draw.js"></script>
+    <!-- Geocoding for address search -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-control-geocoder/2.4.0/Control.Geocoder.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-control-geocoder/2.4.0/Control.Geocoder.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol/dist/L.Control.Locate.min.css" />
     <title>PowerWash Pro - Quote Generator</title>
     <style>
         :root {
@@ -152,6 +166,26 @@
             border-radius: 8px;
             box-shadow: var(--shadow);
         }
+
+        .leaflet-editing-icon {
+        width: 8px !important;
+        height: 8px !important;
+        margin-left: -4px !important;
+        margin-top: -4px !important;
+        border-radius: 50%;
+        background-color: white;
+        border: 2px solid #1e88e5;
+    }
+
+    .leaflet-control-geocoder {
+        max-width: 300px;
+    }
+
+    .leaflet-control-geocoder-form input {
+        width: 100%;
+        border: 1px solid #ccc;
+        padding: 5px;
+    }
         
         .total {
             font-size: 1.2rem;
@@ -674,62 +708,88 @@
             // Initialize map only once
             if (!map) {
                 // Create the map in the 'map' div
-                map = L.map('map').setView([30.0971621, -95.6160549], 15);
-                
-                // Add OpenStreetMap tile layer
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                }).addTo(map);
-                
-                // Initialize FeatureGroup for the drawn items (polygons)
-                drawnItems = new L.FeatureGroup();
-                map.addLayer(drawnItems);
-                
-                // Add Leaflet.GeometryUtil for area calculations if not already present
-                if (!L.GeometryUtil) {
-                    L.GeometryUtil = {
-                        geodesicArea: function(latLngs) {
-                            let area = 0;
-                            const d2r = Math.PI / 180;
-                            let p1, p2;
-                            
-                            for (let i = 0, len = latLngs.length, j = len - 1; i < len; j = i++) {
-                                p1 = latLngs[i];
-                                p2 = latLngs[j];
-                                area += ((p2.lng - p1.lng) * d2r) * 
-                                        (2 + Math.sin(p1.lat * d2r) + Math.sin(p2.lat * d2r));
-                            }
-                            area = area * 6378137.0 * 6378137.0 / 2.0;
-                            return Math.abs(area);
-                        }
-                    };
-                }
-                
-                // Initialize the draw control
-                const drawControl = new L.Control.Draw({
-                    draw: {
-                        polyline: false,
-                        rectangle: false,
-                        circle: false,
-                        circlemarker: false,
-                        marker: false,
-                        polygon: {
-                            allowIntersection: false,
-                            drawError: {
-                                color: '#e1e100',
-                                message: '<strong>Error:</strong> Polygon edges cannot cross!'
-                            },
-                            shapeOptions: {
-                                color: '#1e88e5'
-                            }
-                        }
+                // Create the map
+        map = L.map('map').setView([30.0971621, -95.6160549], 15);
+        
+        // Define base maps
+        const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        });
+        
+        const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: '© Esri'
+        });
+        
+        const baseMaps = {
+            "Street": osm,
+            "Satellite": satellite
+        };
+        
+        // Add default layer
+        osm.addTo(map);
+        
+        // Add layer control
+        L.control.layers(baseMaps).addTo(map);
+        
+        // Initialize FeatureGroup for drawn items
+        drawnItems = new L.FeatureGroup();
+        map.addLayer(drawnItems);
+        
+        // Initialize the draw control with smaller vertices
+        const drawControl = new L.Control.Draw({
+            draw: {
+                polyline: false,
+                rectangle: false,
+                circle: false,
+                circlemarker: false,
+                marker: false,
+                polygon: {
+                    allowIntersection: false,
+                    drawError: {
+                        color: '#e1e100',
+                        message: '<strong>Error:</strong> Polygon edges cannot cross!'
                     },
-                    edit: {
-                        featureGroup: drawnItems,
-                        remove: true
+                    shapeOptions: {
+                        color: '#1e88e5',
+                        weight: 2
+                    },
+                    icon: new L.DivIcon({
+                        iconSize: new L.Point(8, 8),
+                        className: 'leaflet-div-icon leaflet-editing-icon'
+                    })
+                }
+            },
+            edit: {
+                featureGroup: drawnItems,
+                remove: true,
+                edit: {
+                    selectedPathOptions: {
+                        maintainColor: true,
+                        icon: new L.DivIcon({
+                            iconSize: new L.Point(8, 8),
+                            className: 'leaflet-div-icon leaflet-editing-icon'
+                        })
                     }
-                });
-                map.addControl(drawControl);
+                }
+            }
+        });
+        map.addControl(drawControl);
+
+        // Add geocoder control in top-right corner
+        const geocoder = L.Control.geocoder({
+            position: 'topright',
+            defaultMarkGeocode: false,
+            placeholder: 'Search address...',
+            collapsed: false
+        }).addTo(map);
+
+        geocoder.on('markgeocode', function(e) {
+            const bbox = e.geocode.bbox;
+            map.fitBounds([
+                [bbox.getSouth(), bbox.getWest()],
+                [bbox.getNorth(), bbox.getEast()]
+            ]);
+        });
                 
                 // Event handler for when drawing is completed
                 map.on('draw:created', function(e) {
@@ -768,46 +828,32 @@
                     calculatedArea.textContent = '0 sq ft';
                     currentArea = 0;
                 });
-                
-                // Add geocoding control (address search)
-                const geocoder = L.Control.geocoder({
-                    defaultMarkGeocode: false
-                }).addTo(map);
-                
-                geocoder.on('markgeocode', function(e) {
-                    const bbox = e.geocode.bbox;
-                    const poly = L.polygon([
-                        bbox.getSouthEast(),
-                        bbox.getNorthEast(),
-                        bbox.getNorthWest(),
-                        bbox.getSouthWest()
-                    ]);
-                    
-                    map.fitBounds(poly.getBounds());
-                });
+const geocoderControl = L.Control.geocoder({
+    geocoder: geocoder,
+    defaultMarkGeocode: false,
+    placeholder: "Search address...",
+    position: "topleft"
+}).addTo(map);
+
+geocoderControl.on('markgeocode', function(e) {
+    const center = e.geocode.center;
+    map.setView(center, 18);
+});
                 
                 // Add search button functionality
                 document.getElementById('search-button').addEventListener('click', function() {
-                    const address = document.getElementById('search-address').value;
-                    if (address) {
-                        // Use the geocoder control to search
-                        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`)
-                            .then(response => response.json())
-                            .then(data => {
-                                if (data && data.length > 0) {
-                                    const lat = parseFloat(data[0].lat);
-                                    const lon = parseFloat(data[0].lon);
-                                    map.setView([lat, lon], 18);
-                                } else {
-                                    alert('Address not found. Please try again.');
-                                }
-                            })
-                            .catch(error => {
-                                console.error('Error searching for address:', error);
-                                alert('Error searching for address. Please try again.');
-                            });
-                    }
-                });
+    const address = document.getElementById('search-address').value;
+    if (address) {
+        geocoder.geocode(address, function(results) {
+            if (results && results.length > 0) {
+                const result = results[0];
+                map.setView([result.center.lat, result.center.lng], 18);
+            } else {
+                alert('Address not found. Please try again.');
+            }
+        });
+    }
+});
                 
                 // Fix for map rendering issues
                 setTimeout(function() {
@@ -877,13 +923,6 @@
         });
     </script>
     
-    <!-- Leaflet CSS and JS for OpenStreetMap -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/leaflet.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-draw/1.0.4/leaflet.draw.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/leaflet.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-draw/1.0.4/leaflet.draw.js"></script>
-    <!-- Geocoding for address search -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-control-geocoder/2.4.0/Control.Geocoder.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-control-geocoder/2.4.0/Control.Geocoder.js"></script>
+    
 </body>
 </html>
