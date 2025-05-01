@@ -327,60 +327,14 @@
         </div>
     </div>
 
-    <!-- Leaflet CSS and JS for OpenStreetMap -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
-    <!-- Geocoding CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
-
-    <style>
-        /* Add some basic styling for the geocoder control if needed */
-        .leaflet-control-geocoder-form input {
-             /* Inherit styles or add specific ones */
-            width: 200px; /* Example width */
-            padding: 0.5rem;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        /* Ensure map tiles are visible */
-        .leaflet-tile-container img {
-            max-width: none !important; /* Override potential conflicts */
-        }
-        /* Ensure draw controls are visible */
-         .leaflet-draw-toolbar a {
-            background-image: url('https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/images/spritesheet.png');
-            background-size: 240px 30px; /* Adjust if using a different sprite */
-         }
-         .leaflet-retina .leaflet-draw-toolbar a {
-             background-image: url('https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/images/spritesheet-2x.png');
-             background-size: 240px 30px; /* Adjust if using a different sprite */
-         }
-    </style>
-</head>
-<body>
-    <!-- Your existing body content here -->
-    <header>...</header>
-    <nav>...</nav>
-    <div class="container">...</div>
-    <!-- End of existing body content -->
-
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <!-- Leaflet Draw JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
-    <!-- Leaflet Geometry Util (for area calculation, good fallback) -->
-    <script src="https://unpkg.com/leaflet-geometryutil"></script>
-    <!-- Leaflet Geocoding JS -->
-    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
-
     <script>
         // Global variables
         let services = [];
         let selectedServices = [];
         let currentArea = 0;
-        let map = null; // Initialize map variable to null
+        let map = null;
         let drawnItems = null;
-
+        
         // DOM Elements
         const navQuote = document.getElementById('nav-quote');
         const navServices = document.getElementById('nav-services');
@@ -402,696 +356,534 @@
         const copyQuote = document.getElementById('copy-quote');
         const newQuote = document.getElementById('new-quote');
         const addServiceForm = document.getElementById('add-service-form');
-        const searchAddressInput = document.getElementById('search-address'); // Get reference
-        const searchButton = document.getElementById('search-button'); // Get reference
-
-
-        // --- Navigation Functions ---
+        
+        // Navigation
         navQuote.addEventListener('click', (e) => {
             e.preventDefault();
             showPage(quotePage);
             setActiveNav(navQuote);
         });
-
+        
         navServices.addEventListener('click', (e) => {
             e.preventDefault();
             showPage(servicesPage);
             setActiveNav(navServices);
         });
-
+        
         navCalculator.addEventListener('click', (e) => {
             e.preventDefault();
             showPage(calculatorPage);
             setActiveNav(navCalculator);
-            initMap(); // Call initMap when navigating here
+            initMap();
         });
-
+        
         openCalculator.addEventListener('click', (e) => {
-             e.preventDefault();
-             showPage(calculatorPage);
-             setActiveNav(navCalculator);
-             initMap(); // Call initMap when navigating here
+            e.preventDefault();
+            showPage(calculatorPage);
+            setActiveNav(navCalculator);
+            initMap();
         });
-
-        function showPage(pageToShow) {
-            // Hide all pages
+        
+        function showPage(page) {
             quotePage.classList.add('hidden');
             servicesPage.classList.add('hidden');
             calculatorPage.classList.add('hidden');
-            // Show the selected page
-            if (pageToShow) {
-                pageToShow.classList.remove('hidden');
-            } else {
-                console.error("showPage called with undefined page");
-            }
+            page.classList.remove('hidden');
         }
-
-        function setActiveNav(navLinkToActivate) {
-            // Remove active class from all nav links
+        
+        function setActiveNav(navLink) {
             navQuote.classList.remove('active');
             navServices.classList.remove('active');
             navCalculator.classList.remove('active');
-            // Add active class to the selected one
-            if (navLinkToActivate) {
-                navLinkToActivate.classList.add('active');
-            } else {
-                 console.error("setActiveNav called with undefined link");
-            }
+            navLink.classList.add('active');
         }
-
-        // --- Service Management Functions ---
+        
+        // Load services from local storage
         function loadServices() {
             const storedServices = localStorage.getItem('powerwashServices');
             if (storedServices) {
-                try {
-                    services = JSON.parse(storedServices);
-                } catch (e) {
-                    console.error("Error parsing services from localStorage:", e);
-                    services = []; // Reset if data is corrupt
-                    localStorage.removeItem('powerwashServices'); // Clear corrupt data
-                }
-            } else {
-                services = []; // Initialize if nothing is stored
+                services = JSON.parse(storedServices);
+                renderServicesList();
+                renderServiceSelection();
             }
-            // Ensure services is always an array
-            if (!Array.isArray(services)) {
-                console.warn("Stored services was not an array, resetting.");
-                services = [];
-            }
-             console.log("Services loaded:", services);
         }
-
+        
+        // Save services to local storage
         function saveServices() {
-            try {
-                localStorage.setItem('powerwashServices', JSON.stringify(services));
-                console.log("Services saved:", services);
-            } catch (e) {
-                console.error("Error saving services to localStorage:", e);
-            }
+            localStorage.setItem('powerwashServices', JSON.stringify(services));
         }
-
+        
+        // Add a new service
         addServiceForm.addEventListener('submit', (e) => {
-            e.preventDefault(); // Prevent page reload
-
-            const nameInput = document.getElementById('service-name');
-            const priceTypeInput = document.getElementById('price-type');
-            const priceInput = document.getElementById('service-price');
-            const descriptionInput = document.getElementById('service-description');
-
-            const name = nameInput.value.trim();
-            const priceType = priceTypeInput.value;
-            const price = parseFloat(priceInput.value);
-            const description = descriptionInput.value.trim();
-
-            if (name && !isNaN(price) && price >= 0) { // Basic validation
+            e.preventDefault();
+            
+            const name = document.getElementById('service-name').value.trim();
+            const priceType = document.getElementById('price-type').value;
+            const price = parseFloat(document.getElementById('service-price').value);
+            const description = document.getElementById('service-description').value.trim();
+            
+            if (name && price) {
                 const newService = {
-                    id: Date.now().toString(), // Simple unique ID
+                    id: Date.now().toString(),
                     name,
                     priceType,
                     price,
                     description
                 };
-
+                
                 services.push(newService);
                 saveServices();
-                renderServicesList(); // Update the list display
-                renderServiceSelection(); // Update the checkboxes on the quote page
-                addServiceForm.reset(); // Clear the form
-                 console.log("Service added:", newService);
-            } else {
-                alert("Please provide a valid service name and price.");
+                renderServicesList();
+                renderServiceSelection();
+                
+                // Reset form
+                addServiceForm.reset();
             }
         });
-
+        
+        // Render services list
         function renderServicesList() {
-            if (!servicesList) return; // Ensure the element exists
-
             if (services.length === 0) {
                 servicesList.innerHTML = '<p>No services available. Add your first service above.</p>';
                 return;
             }
-
-            servicesList.innerHTML = ''; // Clear existing list
+            
+            servicesList.innerHTML = '';
             services.forEach(service => {
                 const serviceItem = document.createElement('div');
                 serviceItem.className = 'service-item';
-                serviceItem.setAttribute('data-id', service.id); // Add data-id for potential future use
-
+                
                 const serviceInfo = document.createElement('div');
                 serviceInfo.className = 'service-info';
-
-                const priceText = service.priceType === 'flat'
-                    ? `$${service.price.toFixed(2)}`
+                
+                const priceText = service.priceType === 'flat' 
+                    ? `$${service.price.toFixed(2)}` 
                     : `$${service.price.toFixed(2)} per sq ft`;
-
+                
                 serviceInfo.innerHTML = `
                     <h3>${service.name}</h3>
                     <p>${priceText}</p>
-                    <p>${service.description || 'No description'}</p> <!-- Handle empty description -->
+                    <p>${service.description}</p>
                 `;
-
+                
                 const actionButtons = document.createElement('div');
-
+                
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'btn btn-danger btn-small';
                 deleteBtn.textContent = 'Delete';
                 deleteBtn.addEventListener('click', () => {
-                    // Confirmation dialog
-                    if (confirm(`Are you sure you want to delete the service "${service.name}"?`)) {
-                        deleteService(service.id);
-                    }
+                    deleteService(service.id);
                 });
-
+                
                 actionButtons.appendChild(deleteBtn);
                 serviceItem.appendChild(serviceInfo);
                 serviceItem.appendChild(actionButtons);
                 servicesList.appendChild(serviceItem);
             });
         }
-
+        
+        // Delete a service
         function deleteService(id) {
-             console.log("Deleting service with ID:", id);
             services = services.filter(service => service.id !== id);
             saveServices();
-            renderServicesList(); // Update the list on the services page
-            renderServiceSelection(); // Update the checkboxes on the quote page
-            calculateTotal(); // Recalculate total if deleted service was selected
+            renderServicesList();
+            renderServiceSelection();
+            calculateTotal();
         }
-
+        
+        // Render service selection for quotes
         function renderServiceSelection() {
-            if (!serviceSelection) return; // Ensure the element exists
-
             if (services.length === 0) {
                 serviceSelection.innerHTML = '<p>No services available. Add services in the Manage Services section.</p>';
                 return;
             }
-
-            serviceSelection.innerHTML = ''; // Clear existing options
-            // Keep track of currently checked services to re-apply check state if possible
-            const currentlyCheckedIds = selectedServices.map(s => s.id);
-
+            
+            serviceSelection.innerHTML = '';
             services.forEach(service => {
                 const serviceCheck = document.createElement('div');
                 serviceCheck.className = 'form-group';
-
-                const priceText = service.priceType === 'flat'
-                    ? `$${service.price.toFixed(2)}`
+                
+                const priceText = service.priceType === 'flat' 
+                    ? `$${service.price.toFixed(2)}` 
                     : `$${service.price.toFixed(2)} per sq ft`;
-
-                 const inputId = `service-checkbox-${service.id}`; // Unique ID for the input
-
+                
                 serviceCheck.innerHTML = `
-                    <label for="${inputId}">
-                        <input type="checkbox" class="service-checkbox" id="${inputId}" data-id="${service.id}" ${currentlyCheckedIds.includes(service.id) ? 'checked' : ''}>
+                    <label>
+                        <input type="checkbox" class="service-checkbox" data-id="${service.id}">
                         ${service.name} (${priceText})
                     </label>
                 `;
-
+                
                 serviceSelection.appendChild(serviceCheck);
             });
-
-            // Add event listeners to the newly created checkboxes
+            
+            // Add event listeners to checkboxes
             document.querySelectorAll('.service-checkbox').forEach(checkbox => {
-                checkbox.removeEventListener('change', handleServiceCheckboxChange); // Remove old listener first
-                checkbox.addEventListener('change', handleServiceCheckboxChange);
+                checkbox.addEventListener('change', () => {
+                    updateSelectedServices();
+                    calculateTotal();
+                });
             });
-
-            // Initial update in case services were re-rendered while some were checked
-             updateSelectedServices();
         }
-
-        // Separate handler function for checkbox changes
-        function handleServiceCheckboxChange() {
-            updateSelectedServices();
-            calculateTotal();
-        }
-
-
+        
+        // Update selected services array based on checkboxes
         function updateSelectedServices() {
-            selectedServices = []; // Reset the array
+            selectedServices = [];
             document.querySelectorAll('.service-checkbox:checked').forEach(checkbox => {
                 const serviceId = checkbox.getAttribute('data-id');
                 const service = services.find(s => s.id === serviceId);
                 if (service) {
                     selectedServices.push(service);
-                } else {
-                     console.warn(`Service with ID ${serviceId} not found during selection update.`);
                 }
             });
-            console.log("Selected services updated:", selectedServices);
         }
-
-
-        // --- Quote Calculation & Generation Functions ---
+        
+        // Calculate total quote amount
         function calculateTotal() {
             let total = 0;
-            // Ensure customArea has a valid number, default to 0 if not
             const area = parseFloat(customArea.value) || 0;
-
+            
             selectedServices.forEach(service => {
-                if (!service || typeof service.price !== 'number') {
-                     console.warn("Skipping invalid service in calculation:", service);
-                     return; // Skip this service if data is invalid
-                }
                 if (service.priceType === 'flat') {
                     total += service.price;
-                } else if (service.priceType === 'sqft') {
+                } else {
                     total += service.price * area;
                 }
             });
-
-            if (quoteTotal) {
-                 quoteTotal.textContent = total.toFixed(2);
-            }
-            return total; // Return the calculated total
+            
+            quoteTotal.textContent = total.toFixed(2);
+            return total;
         }
-
+        
         // Listen for custom area changes
-        if (customArea) {
-            customArea.addEventListener('input', calculateTotal);
-        }
-
-        // Generate Quote Button Click
-        if (generateQuote) {
-            generateQuote.addEventListener('click', () => {
-                const customerName = document.getElementById('customer-name')?.value.trim() || '';
-                const customerEmail = document.getElementById('customer-email')?.value.trim() || '';
-                const customerPhone = document.getElementById('customer-phone')?.value.trim() || '';
-                const propertyAddress = document.getElementById('property-address')?.value.trim() || '';
-                const notes = document.getElementById('notes')?.value.trim() || '';
-                const area = parseFloat(customArea.value) || 0;
-                const total = calculateTotal(); // Recalculate to be sure
-
-                if (!customerName) {
-                    alert('Please enter a customer name.');
-                    return;
-                }
-
-                if (selectedServices.length === 0) {
-                    alert('Please select at least one service.');
-                    return;
-                }
-
-                const date = new Date().toLocaleDateString();
-
-                // Build the HTML string for the quote details
-                let quoteHTML = `
-                    <div style="margin-bottom: 1rem;">
-                        <strong>Date:</strong> ${date}<br>
-                        <strong>Customer:</strong> ${customerName}<br>
-                        ${customerEmail ? `<strong>Email:</strong> ${customerEmail}<br>` : ''}
-                        ${customerPhone ? `<strong>Phone:</strong> ${customerPhone}<br>` : ''}
-                        ${propertyAddress ? `<strong>Address:</strong> ${propertyAddress}<br>` : ''}
-                        ${area > 0 && selectedServices.some(s => s.priceType === 'sqft') ? `<strong>Area:</strong> ${area} sq ft<br>` : ''}
-                    </div>
-
-                    <h3>Selected Services:</h3>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Service</th>
-                                <th>Price Details</th>
-                                <th>Subtotal</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                `;
-
-                selectedServices.forEach(service => {
-                    let serviceTotal;
-                    let priceText;
-
-                    if (service.priceType === 'flat') {
-                        serviceTotal = service.price;
-                        priceText = `$${service.price.toFixed(2)} (Flat Rate)`;
-                    } else { // sqft
-                        serviceTotal = service.price * area;
-                        priceText = `$${service.price.toFixed(2)}/sq ft × ${area} sq ft`;
-                    }
-
-                    quoteHTML += `
-                        <tr>
-                            <td>${service.name}</td>
-                            <td>${priceText}</td>
-                            <td>$${serviceTotal.toFixed(2)}</td>
-                        </tr>
-                    `;
-                });
-
-                quoteHTML += `
-                        </tbody>
-                    </table>
-
-                    <div class="total" style="margin-top: 1rem;">
-                        <strong>Total Amount: $${total.toFixed(2)}</strong>
-                    </div>
-
-                    ${notes ? `<div style="margin-top: 1rem;"><strong>Notes:</strong><br>${notes.replace(/\n/g, '<br>')}</div>` : ''} <!-- Handle newlines in notes -->
-                `;
-
-                if (quoteDetails) {
-                    quoteDetails.innerHTML = quoteHTML;
-                }
-                if (quoteResult) {
-                    quoteResult.classList.remove('hidden'); // Show the result card
-                }
-                // Optionally scroll to the result
-                // quoteResult?.scrollIntoView({ behavior: 'smooth' });
-                 console.log("Quote generated.");
-            });
-        }
-
-        // Copy quote to clipboard
-        if (copyQuote) {
-            copyQuote.addEventListener('click', () => {
-                // Get text content, attempt to format slightly better for plain text
-                const quoteText = quoteDetails?.innerText || '';
-                if (!quoteText) {
-                    alert("Nothing to copy.");
-                    return;
-                }
-
-                 if (navigator.clipboard && navigator.clipboard.writeText) {
-                    navigator.clipboard.writeText(quoteText)
-                        .then(() => {
-                            alert('Quote copied to clipboard');
-                        })
-                        .catch(err => {
-                            console.error('Failed to copy quote using navigator.clipboard: ', err);
-                            // Fallback for older browsers or if clipboard access fails
-                            try {
-                                const textArea = document.createElement("textarea");
-                                textArea.value = quoteText;
-                                textArea.style.position = "fixed"; // Avoid scrolling
-                                document.body.appendChild(textArea);
-                                textArea.focus();
-                                textArea.select();
-                                document.execCommand('copy');
-                                document.body.removeChild(textArea);
-                                alert('Quote copied to clipboard (using fallback method).');
-                            } catch (fallbackErr) {
-                                console.error('Fallback copy method failed:', fallbackErr);
-                                alert('Failed to copy quote automatically. Please select and copy the text manually.');
-                            }
-                        });
-                 } else {
-                     // Very old browser fallback
-                      try {
-                          const textArea = document.createElement("textarea");
-                          textArea.value = quoteText;
-                          textArea.style.position = "fixed";
-                          document.body.appendChild(textArea);
-                          textArea.focus();
-                          textArea.select();
-                          document.execCommand('copy');
-                          document.body.removeChild(textArea);
-                          alert('Quote copied to clipboard (using fallback method).');
-                      } catch (fallbackErr) {
-                          console.error('Fallback copy method failed:', fallbackErr);
-                          alert('Failed to copy quote automatically. Please select and copy the text manually.');
-                      }
-                 }
-            });
-        }
-
-        // New quote button
-        if (newQuote) {
-            newQuote.addEventListener('click', () => {
-                 // Reset form fields
-                document.getElementById('customer-name')?.value = '';
-                document.getElementById('customer-email')?.value = '';
-                document.getElementById('customer-phone')?.value = '';
-                document.getElementById('property-address')?.value = '';
-                document.getElementById('notes')?.value = '';
-                if (customArea) customArea.value = '0';
-
-                // Uncheck all service checkboxes
-                document.querySelectorAll('.service-checkbox').forEach(checkbox => {
-                    checkbox.checked = false;
-                });
-
-                // Clear selected services array and update total
-                selectedServices = [];
-                calculateTotal();
-
-                // Hide the quote result section
-                if (quoteResult) quoteResult.classList.add('hidden');
-                 console.log("New quote started, form reset.");
-            });
-        }
-
-        // --- OpenStreetMap with Leaflet implementation ---
-        function initMap() {
-            const mapElement = document.getElementById('map');
-            if (!mapElement) {
-                console.error("Map container element (#map) not found!");
+        customArea.addEventListener('input', calculateTotal);
+        
+        // Generate Quote
+        generateQuote.addEventListener('click', () => {
+            const customerName = document.getElementById('customer-name').value.trim();
+            const customerEmail = document.getElementById('customer-email').value.trim();
+            const customerPhone = document.getElementById('customer-phone').value.trim();
+            const propertyAddress = document.getElementById('property-address').value.trim();
+            const notes = document.getElementById('notes').value.trim();
+            const area = parseFloat(customArea.value) || 0;
+            const total = calculateTotal();
+            
+            if (!customerName) {
+                alert('Please enter a customer name.');
                 return;
             }
-
-            // Initialize map only if it hasn't been initialized yet
-            if (!map) {
-                console.log("Initializing Leaflet map...");
-                try {
-                    map = L.map('map').setView([30.2672, -97.7431], 7); // Austin, TX, Zoom 7
-
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-                        maxZoom: 19
-                    }).addTo(map);
-
-                    drawnItems = new L.FeatureGroup();
-                    map.addLayer(drawnItems);
-
-                    if (!L.GeometryUtil) {
-                        console.warn("L.GeometryUtil not found. Area calculation might be less accurate.");
-                    }
-
-                    const drawControl = new L.Control.Draw({
-                        draw: {
-                            polyline: false, rectangle: true, circle: false,
-                            circlemarker: false, marker: false,
-                            polygon: {
-                                allowIntersection: false,
-                                shapeOptions: { color: '#1e88e5' }
-                            }
-                        },
-                        edit: { featureGroup: drawnItems, remove: true }
-                    });
-                    map.addControl(drawControl);
-
-                    map.on(L.Draw.Event.CREATED, handleDrawCreated);
-                    map.on(L.Draw.Event.EDITED, handleDrawEdited);
-                    map.on(L.Draw.Event.DELETED, handleDrawDeleted);
-
-                     console.log("Map initialized successfully.");
-
-                 } catch (error) {
-                     console.error("Error initializing Leaflet map:", error);
-                     mapElement.innerHTML = '<p style="color: red;">Error loading map. Please check the console.</p>';
-                     map = null; // Ensure map is null if initialization failed
-                     return; // Stop execution if map failed
-                 }
-
-            } // End of if (!map)
-
-            // Attach listener for CUSTOM search button every time initMap is called
-            // (Handles cases where elements might be recreated or listeners lost)
-            if (searchButton && searchAddressInput) {
-                 // Remove previous listener to prevent duplicates
-                 searchButton.removeEventListener('click', handleAddressSearch);
-                 searchButton.addEventListener('click', handleAddressSearch);
-                 console.log("Search button listener attached/re-attached.");
-            } else {
-                 console.error("Search input or button not found when trying to attach listener!");
+            
+            if (selectedServices.length === 0) {
+                alert('Please select at least one service.');
+                return;
             }
-
-            // Refresh map size after a short delay, especially if it was hidden
-            setTimeout(() => {
-                if (map) {
-                    map.invalidateSize();
-                    console.log("Map invalidated size.");
-                }
-            }, 100); // 100ms delay might be sufficient
-        }
-
-        // --- Map Drawing Event Handlers ---
-        function handleDrawCreated(e) {
-            const type = e.layerType;
-            const layer = e.layer;
-
-            drawnItems.clearLayers(); // Clear previous drawings
-            drawnItems.addLayer(layer); // Add the new layer
-
-            calculateAndDisplayArea(layer);
-        }
-
-        function handleDrawEdited(e) {
-            const layers = e.layers;
-            if (layers.getLayers().length > 0) {
-                // Assuming only one layer is edited at a time in this setup
-                calculateAndDisplayArea(layers.getLayers()[0]);
-            }
-        }
-
-        function handleDrawDeleted() {
-            if (calculatedArea) calculatedArea.textContent = '0 sq ft';
-            currentArea = 0;
-             console.log("Drawing deleted, area reset.");
-        }
-
-        function calculateAndDisplayArea(layer) {
-            let areaInSqMeters = 0;
-            try {
-                if ((layer instanceof L.Polygon || layer instanceof L.Rectangle) && L.GeometryUtil) {
-                    // Use GeometryUtil for potentially more accurate geodesic area
-                     areaInSqMeters = L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
-                } else if (layer.getBounds) {
-                    // Fallback: calculate area from bounds (less accurate for large/non-rectangular shapes)
-                    console.warn("Using bounds-based area calculation (less accurate).");
-                    const bounds = layer.getBounds();
-                    // Rough calculation: distance N-S * distance E-W
-                    areaInSqMeters = bounds.getNorthEast().distanceTo(bounds.getSouthEast()) * bounds.getNorthEast().distanceTo(bounds.getNorthWest());
+            
+            const date = new Date().toLocaleDateString();
+            
+            let quoteHTML = `
+                <div style="margin-bottom: 1rem;">
+                    <strong>Date:</strong> ${date}<br>
+                    <strong>Customer:</strong> ${customerName}<br>
+                    ${customerEmail ? `<strong>Email:</strong> ${customerEmail}<br>` : ''}
+                    ${customerPhone ? `<strong>Phone:</strong> ${customerPhone}<br>` : ''}
+                    ${propertyAddress ? `<strong>Address:</strong> ${propertyAddress}<br>` : ''}
+                    ${area > 0 ? `<strong>Area:</strong> ${area} sq ft<br>` : ''}
+                </div>
+                
+                <h3>Selected Services:</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Service</th>
+                            <th>Price</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            selectedServices.forEach(service => {
+                let serviceTotal;
+                let priceText;
+                
+                if (service.priceType === 'flat') {
+                    serviceTotal = service.price;
+                    priceText = `$${service.price.toFixed(2)}`;
                 } else {
-                     console.warn("Cannot calculate area for this layer type.");
+                    serviceTotal = service.price * area;
+                    priceText = `$${service.price.toFixed(2)} per sq ft × ${area} sq ft`;
                 }
-            } catch (err) {
-                console.error("Error calculating area:", err);
-                // Attempt bounds calculation as a last resort if geodesic failed
-                 try {
-                     const bounds = layer.getBounds();
-                     areaInSqMeters = bounds.getNorthEast().distanceTo(bounds.getSouthEast()) * bounds.getNorthEast().distanceTo(bounds.getNorthWest());
-                 } catch (fallbackErr) {
-                     console.error("Fallback area calculation also failed:", fallbackErr);
-                     areaInSqMeters = 0; // Give up if all fails
-                 }
-            }
-
-            const areaInSqFt = Math.round(areaInSqMeters * 10.7639); // Convert m² to ft²
-
-            if (calculatedArea) {
-                calculatedArea.textContent = `${areaInSqFt} sq ft`;
-            }
-            currentArea = areaInSqFt;
-             console.log(`Area calculated: ${areaInSqFt} sq ft`);
-        }
-
-
-        // --- Address Search Handler ---
-        function handleAddressSearch() {
-             const address = searchAddressInput.value.trim();
-             console.log(`Searching for address: ${address}`);
-             if (!address) {
-                 alert("Please enter an address to search.");
-                 return
-             }
-             if (!map) {
-                 console.error("Map is not initialized yet.");
-                 alert("Map is not ready, please wait a moment and try again.");
-                 return;
-             }
-
-             // Show loading indicator maybe? (optional)
-             searchButton.textContent = "Searching...";
-             searchButton.disabled = true;
-
-             const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&countrycodes=us&viewbox=-106.6456,36.5007,-93.5083,25.8374&bounded=1`; // Texas bounding box
-
-             fetch(nominatimUrl)
-                 .then(response => {
-                     if (!response.ok) {
-                         throw new Error(`HTTP error! status: ${response.status}`);
-                     }
-                     return response.json();
-                 })
-                 .then(data => {
-                     console.log("Nominatim response:", data);
-                     if (data && data.length > 0) {
-                         const result = data[0]; // Use the first result
-                         const lat = parseFloat(result.lat);
-                         const lon = parseFloat(result.lon);
-
-                         map.setView([lat, lon], 17); // Zoom level 17
-
-                         // Clear previous markers? (optional)
-                         // map.eachLayer(layer => { if (layer instanceof L.Marker) map.removeLayer(layer); });
-
-                         // Add a marker
-                         L.marker([lat, lon]).addTo(map)
-                           .bindPopup(`<b>${result.display_name}</b><br>Lat: ${lat.toFixed(4)}, Lon: ${lon.toFixed(4)}`)
-                           .openPopup();
-                     } else {
-                         alert('Address not found within Texas, USA. Please try a more specific address or check spelling.');
-                     }
-                 })
-                 .catch(error => {
-                     console.error('Error searching for address:', error);
-                     alert(`Error searching for address: ${error.message}. Please check the console for details.`);
-                 })
-                 .finally(() => {
-                     // Reset button state
-                     searchButton.textContent = "Search";
-                     searchButton.disabled = false;
-                 });
-         }
-
-
-        // --- Area Calculator Buttons ---
-        if (useArea) {
-            useArea.addEventListener('click', () => {
-                if (customArea) {
-                    customArea.value = currentArea;
-                    // Trigger input event to recalculate total if quote page is visible
-                    customArea.dispatchEvent(new Event('input'));
-                }
-                showPage(quotePage);
-                setActiveNav(navQuote);
-                // calculateTotal(); // Recalculate (also triggered by input event)
-                 console.log(`Using area: ${currentArea} sq ft`);
+                
+                quoteHTML += `
+                    <tr>
+                        <td>${service.name}</td>
+                        <td>${priceText}</td>
+                        <td>$${serviceTotal.toFixed(2)}</td>
+                    </tr>
+                `;
             });
-        }
-
-        if (resetArea) {
-            resetArea.addEventListener('click', () => {
-                if (drawnItems && map) {
-                    drawnItems.clearLayers();
-                    if (calculatedArea) calculatedArea.textContent = '0 sq ft';
-                    currentArea = 0;
-                    // Optionally reset map view to default Texas view
-                    // map.setView([30.2672, -97.7431], 7);
-                     console.log("Area drawing reset.");
-                }
-            });
-        }
-
-        // --- Example Services Function (Optional) ---
-        function addExampleServices() {
-            // Add examples only if no services exist in localStorage
-            const storedServices = localStorage.getItem('powerwashServices');
-             if (!storedServices || JSON.parse(storedServices).length === 0) {
-                console.log("Adding example services...");
-                services = [
-                    { id: 'ex1', name: 'House Exterior Wash (Vinyl)', priceType: 'flat', price: 250.00, description: 'Standard wash for vinyl siding' },
-                    { id: 'ex2', name: 'Driveway Cleaning (Concrete)', priceType: 'sqft', price: 0.15, description: 'Per square foot cleaning' },
-                    { id: 'ex3', name: 'Deck/Patio Cleaning (Wood)', priceType: 'sqft', price: 0.25, description: 'Gentle wash for wood surfaces' },
-                    { id: 'ex4', name: 'Roof Soft Wash', priceType: 'flat', price: 400.00, description: 'Low pressure cleaning for roof shingles' }
-                ];
-                saveServices(); // Save the examples
-            }
-        }
-
-        // --- Initialize App ---
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log("DOM fully loaded and parsed");
-            loadServices();
-            // addExampleServices(); // Uncomment this line if you want default example services added on first load
-            renderServicesList(); // Update display on services page
-            renderServiceSelection(); // Update display on quote page
-            showPage(quotePage); // Start on the quote page
-            setActiveNav(navQuote); // Set quote nav as active initially
-            // Map is initialized only when the calculator tab is clicked
+            
+            quoteHTML += `
+                    </tbody>
+                </table>
+                
+                <div class="total">
+                    <strong>Total Amount: $${total.toFixed(2)}</strong>
+                </div>
+                
+                ${notes ? `<div style="margin-top: 1rem;"><strong>Notes:</strong><br>${notes}</div>` : ''}
+            `;
+            
+            quoteDetails.innerHTML = quoteHTML;
+            quoteResult.classList.remove('hidden');
         });
-
+        
+        // Copy quote to clipboard
+        copyQuote.addEventListener('click', () => {
+            const quoteText = quoteDetails.innerText;
+            navigator.clipboard.writeText(quoteText)
+                .then(() => {
+                    alert('Quote copied to clipboard');
+                })
+                .catch(err => {
+                    console.error('Failed to copy quote: ', err);
+                    alert('Failed to copy quote. Try selecting and copying manually.');
+                });
+        });
+        
+        // New quote button
+        newQuote.addEventListener('click', () => {
+            document.getElementById('customer-name').value = '';
+            document.getElementById('customer-email').value = '';
+            document.getElementById('customer-phone').value = '';
+            document.getElementById('property-address').value = '';
+            document.getElementById('notes').value = '';
+            customArea.value = '0';
+            
+            document.querySelectorAll('.service-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            
+            selectedServices = [];
+            calculateTotal();
+            quoteResult.classList.add('hidden');
+        });
+        
+        // OpenStreetMap with Leaflet implementation
+        function initMap() {
+            // Initialize map only once
+            if (!map) {
+                // Create the map in the 'map' div
+                map = L.map('map').setView([30.0971621, -95.6160549], 15);
+                
+                // Add OpenStreetMap tile layer
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(map);
+                
+                // Initialize FeatureGroup for the drawn items (polygons)
+                drawnItems = new L.FeatureGroup();
+                map.addLayer(drawnItems);
+                
+                // Add Leaflet.GeometryUtil for area calculations if not already present
+                if (!L.GeometryUtil) {
+                    L.GeometryUtil = {
+                        geodesicArea: function(latLngs) {
+                            let area = 0;
+                            const d2r = Math.PI / 180;
+                            let p1, p2;
+                            
+                            for (let i = 0, len = latLngs.length, j = len - 1; i < len; j = i++) {
+                                p1 = latLngs[i];
+                                p2 = latLngs[j];
+                                area += ((p2.lng - p1.lng) * d2r) * 
+                                        (2 + Math.sin(p1.lat * d2r) + Math.sin(p2.lat * d2r));
+                            }
+                            area = area * 6378137.0 * 6378137.0 / 2.0;
+                            return Math.abs(area);
+                        }
+                    };
+                }
+                
+                // Initialize the draw control
+                const drawControl = new L.Control.Draw({
+                    draw: {
+                        polyline: false,
+                        rectangle: false,
+                        circle: false,
+                        circlemarker: false,
+                        marker: false,
+                        polygon: {
+                            allowIntersection: false,
+                            drawError: {
+                                color: '#e1e100',
+                                message: '<strong>Error:</strong> Polygon edges cannot cross!'
+                            },
+                            shapeOptions: {
+                                color: '#1e88e5'
+                            }
+                        }
+                    },
+                    edit: {
+                        featureGroup: drawnItems,
+                        remove: true
+                    }
+                });
+                map.addControl(drawControl);
+                
+                // Event handler for when drawing is completed
+                map.on('draw:created', function(e) {
+                    const layer = e.layer;
+                    
+                    // Clear previous polygons
+                    drawnItems.clearLayers();
+                    
+                    // Add the new polygon
+                    drawnItems.addLayer(layer);
+                    
+                    // Calculate the area (in square meters)
+                    const areaInSqMeters = L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
+                    const areaInSqFt = Math.round(areaInSqMeters * 10.764); // Convert m² to ft²
+                    
+                    calculatedArea.textContent = `${areaInSqFt} sq ft`;
+                    currentArea = areaInSqFt;
+                });
+                
+                // Event handler for when a shape is edited
+                map.on('draw:edited', function(e) {
+                    const layers = e.layers;
+                    let areaInSqFt = 0;
+                    
+                    layers.eachLayer(function(layer) {
+                        const areaInSqMeters = L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
+                        areaInSqFt = Math.round(areaInSqMeters * 10.764); // Convert m² to ft²
+                    });
+                    
+                    calculatedArea.textContent = `${areaInSqFt} sq ft`;
+                    currentArea = areaInSqFt;
+                });
+                
+                // Event handler for when a shape is deleted
+                map.on('draw:deleted', function(e) {
+                    calculatedArea.textContent = '0 sq ft';
+                    currentArea = 0;
+                });
+                
+                // Add geocoding control (address search)
+                const geocoder = L.Control.geocoder({
+                    defaultMarkGeocode: false
+                }).addTo(map);
+                
+                geocoder.on('markgeocode', function(e) {
+                    const bbox = e.geocode.bbox;
+                    const poly = L.polygon([
+                        bbox.getSouthEast(),
+                        bbox.getNorthEast(),
+                        bbox.getNorthWest(),
+                        bbox.getSouthWest()
+                    ]);
+                    
+                    map.fitBounds(poly.getBounds());
+                });
+                
+                // Add search button functionality
+                document.getElementById('search-button').addEventListener('click', function() {
+                    const address = document.getElementById('search-address').value;
+                    if (address) {
+                        // Use the geocoder control to search
+                        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data && data.length > 0) {
+                                    const lat = parseFloat(data[0].lat);
+                                    const lon = parseFloat(data[0].lon);
+                                    map.setView([lat, lon], 18);
+                                } else {
+                                    alert('Address not found. Please try again.');
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error searching for address:', error);
+                                alert('Error searching for address. Please try again.');
+                            });
+                    }
+                });
+                
+                // Fix for map rendering issues
+                setTimeout(function() {
+                    map.invalidateSize();
+                }, 100);
+            } else {
+                // If map already exists, just invalidate size to ensure proper rendering
+                setTimeout(function() {
+                    map.invalidateSize();
+                }, 100);
+            }
+        }
+        
+        // Use calculated area
+        useArea.addEventListener('click', () => {
+            customArea.value = currentArea;
+            showPage(quotePage);
+            setActiveNav(navQuote);
+            calculateTotal();
+        });
+        
+        // Reset area
+        resetArea.addEventListener('click', () => {
+            if (drawnItems && map) {
+                drawnItems.clearLayers();
+                calculatedArea.textContent = '0 sq ft';
+                currentArea = 0;
+            }
+        });
+        
+        // Add example services
+        function addExampleServices() {
+            if (services.length === 0) {
+                services = [
+                    {
+                        id: '1',
+                        name: 'House Exterior Wash',
+                        priceType: 'flat',
+                        price: 150,
+                        description: 'Complete exterior house washing'
+                    },
+                    {
+                        id: '2',
+                        name: 'Driveway Cleaning',
+                        priceType: 'sqft',
+                        price: 0.40,
+                        description: 'Deep clean of concrete driveway surface'
+                    },
+                    {
+                        id: '3',
+                        name: 'Deck/Patio Cleaning',
+                        priceType: 'sqft',
+                        price: 0.50,
+                        description: 'Cleaning of wooden deck or stone patio'
+                    }
+                ];
+                saveServices();
+                renderServicesList();
+                renderServiceSelection();
+            }
+        }
+        
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', () => {
+            loadServices();
+            addExampleServices();
+        });
     </script>
-
+    
+    <!-- Leaflet CSS and JS for OpenStreetMap -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-draw/1.0.4/leaflet.draw.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-draw/1.0.4/leaflet.draw.js"></script>
+    <!-- Geocoding for address search -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-control-geocoder/2.4.0/Control.Geocoder.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-control-geocoder/2.4.0/Control.Geocoder.js"></script>
 </body>
 </html>
