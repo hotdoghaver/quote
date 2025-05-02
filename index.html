@@ -28,7 +28,8 @@
             --dark-text: #333;
             --light-text: #fff;
             --shadow: 0 2px 5px rgba(0,0,0,0.2);
-        
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
@@ -422,7 +423,7 @@
             showPage(quotePage);
             setActiveNav(navQuote);
         });
-        
+
         navServices.addEventListener('click', (e) => {
             e.preventDefault();
             showPage(servicesPage);
@@ -923,7 +924,7 @@ geocoder.on('markgeocode', function(e) {
                 });
 
 
-geocoderControl.on('markgeocode', function(e) {
+        geocoder.on('markgeocode', function(e) {
     const center = e.geocode.center;
     map.setView(center, 18);
 });
@@ -1016,9 +1017,10 @@ geocoderControl.on('markgeocode', function(e) {
         
         // Initialize app
         document.addEventListener('DOMContentLoaded', () => {
-            loadServices();
-            addExampleServices();
-        });
+                loadServices();
+                addExampleServices();
+            });
+        };
     </script>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
@@ -1045,4 +1047,3 @@ geocoderControl.on('markgeocode', function(e) {
         
 </body>
 </html>
-        
