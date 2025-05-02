@@ -111,6 +111,19 @@
             margin-top: 0.8rem;
             font-weight: bold;
         }
+
+        .leaflet-draw-toolbar {
+    margin-top: 45px !important;
+}
+
+.leaflet-control-geocoder {
+    clear: none !important;
+    margin-right: 10px !important;
+}
+
+.leaflet-control-geocoder-form input {
+    width: 250px !important;
+}
         
         .form-group {
             margin-bottom: 1rem;
@@ -166,6 +179,23 @@
             border-radius: 8px;
             box-shadow: var(--shadow);
         }
+
+
+        .leaflet-control-geocoder {
+    clear: none !important;
+    margin-right: 10px !important;
+}
+
+.leaflet-control-geocoder-form input {
+    width: 250px !important;
+    padding: 5px !important;
+    border: 1px solid #ccc !important;
+}
+
+.leaflet-control-geocoder-selected {
+    background-color: #f4f4f4 !important;
+    border-radius: 4px !important;
+}
 
         .leaflet-editing-icon {
         width: 8px !important;
@@ -335,11 +365,6 @@
                 
                 <div id="map"></div>
                 
-                <div class="form-group">
-                    <label for="search-address">Search Address:</label>
-                    <input id="search-address" type="text" placeholder="Enter address to search">
-                    <button id="search-button" class="btn">Search</button>
-                </div>
                 
                 <div class="instructions">
                     <p>Instructions:</p>
@@ -712,25 +737,49 @@
         map = L.map('map').setView([30.0971621, -95.6160549], 15);
         
         // Define base maps
-        const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        });
-        
-        const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            attribution: '© Esri'
-        });
-        
-        const baseMaps = {
-            "Street": osm,
-            "Satellite": satellite
-        };
-        
-        // Add default layer
-        osm.addTo(map);
-        
-        // Add layer control
-        L.control.layers(baseMaps).addTo(map);
-        
+const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
+});
+
+const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    attribution: '© Esri'
+});
+
+// Building outlines layer
+const buildings = L.tileLayer('https://tiles.stadiamaps.com/tiles/outdoors/{z}/{x}/{y}.png', {
+    attribution: '© Stadia Maps',
+    opacity: 1,
+    className: 'building-outlines'
+});
+
+// Add custom CSS for building outlines
+const style = document.createElement('style');
+style.textContent = `
+    .building-outlines {
+        mix-blend-mode: multiply;
+        filter: grayscale(100%) brightness(40%) contrast(200%);
+    }
+`;
+document.head.appendChild(style);
+
+// Create hybrid layer group (now using OSM as base instead of satellite)
+const hybrid = L.layerGroup([
+    osm,
+    buildings
+]);
+
+const baseMaps = {
+    "Street": osm,
+    "Satellite": satellite,
+    "Hybrid (with Buildings)": hybrid
+};
+
+// Add default layer
+osm.addTo(map);
+
+// Add layer control
+L.control.layers(baseMaps).addTo(map);
+
         // Initialize FeatureGroup for drawn items
         drawnItems = new L.FeatureGroup();
         map.addLayer(drawnItems);
@@ -776,20 +825,36 @@
         map.addControl(drawControl);
 
         // Add geocoder control in top-right corner
-        const geocoder = L.Control.geocoder({
-            position: 'topright',
-            defaultMarkGeocode: false,
-            placeholder: 'Search address...',
-            collapsed: false
-        }).addTo(map);
+        let searchMarker = null;
 
-        geocoder.on('markgeocode', function(e) {
-            const bbox = e.geocode.bbox;
-            map.fitBounds([
-                [bbox.getSouth(), bbox.getWest()],
-                [bbox.getNorth(), bbox.getEast()]
-            ]);
-        });
+const geocoder = L.Control.geocoder({
+    position: 'topright',
+    defaultMarkGeocode: false,
+    placeholder: 'Search address...',
+    collapsed: false
+}).addTo(map);
+
+geocoder.on('markgeocode', function(e) {
+    const bbox = e.geocode.bbox;
+    const poly = L.polygon([
+        bbox.getSouthEast(),
+        bbox.getNorthEast(),
+        bbox.getNorthWest(),
+        bbox.getSouthWest()
+    ]);
+    
+    // Remove previous marker if it exists
+    if (searchMarker) {
+        map.removeLayer(searchMarker);
+    }
+    
+    // Add marker at the location
+    searchMarker = L.marker(e.geocode.center).addTo(map);
+    searchMarker.bindPopup(e.geocode.name).openPopup();
+    
+    // Zoom to location
+    map.fitBounds(poly.getBounds());
+});
                 
                 // Event handler for when drawing is completed
                 map.on('draw:created', function(e) {
@@ -828,12 +893,7 @@
                     calculatedArea.textContent = '0 sq ft';
                     currentArea = 0;
                 });
-const geocoderControl = L.Control.geocoder({
-    geocoder: geocoder,
-    defaultMarkGeocode: false,
-    placeholder: "Search address...",
-    position: "topleft"
-}).addTo(map);
+
 
 geocoderControl.on('markgeocode', function(e) {
     const center = e.geocode.center;
@@ -847,6 +907,16 @@ geocoderControl.on('markgeocode', function(e) {
         geocoder.geocode(address, function(results) {
             if (results && results.length > 0) {
                 const result = results[0];
+                
+                // Remove previous marker if it exists
+                if (searchMarker) {
+                    map.removeLayer(searchMarker);
+                }
+                
+                // Add marker at the location
+                searchMarker = L.marker([result.center.lat, result.center.lng]).addTo(map);
+                searchMarker.bindPopup(result.name).openPopup();
+                
                 map.setView([result.center.lat, result.center.lng], 18);
             } else {
                 alert('Address not found. Please try again.');
