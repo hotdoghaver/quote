@@ -1,24 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
-    <!-- Leaflet CSS and JS for OpenStreetMap -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/leaflet.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-draw/1.0.4/leaflet.draw.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/leaflet.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-draw/1.0.4/leaflet.draw.js"></script>
-    <!-- Geocoding for address search -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-control-geocoder/2.4.0/Control.Geocoder.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-control-geocoder/2.4.0/Control.Geocoder.js"></script>
-    <!-- Firebase SDK for database storage -->
-     
-
-
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol/dist/L.Control.Locate.min.css" />
     <title>PowerWash Pro - Quote Generator</title>
+
+    <!-- Leaflet CSS and Geocoder CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-draw/1.0.4/leaflet.draw.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-control-geocoder/2.4.0/Control.Geocoder.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol/dist/L.Control.Locate.min.css" />
+
+    <!-- Your custom styles -->
     <style>
         :root {
             --primary: #1e88e5;
@@ -36,19 +29,19 @@
             padding: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        
+
         body {
             background-color: var(--light-bg);
             color: var(--dark-text);
             line-height: 1.6;
         }
-        
+
         .container {
             max-width: 100%;
             padding: 1rem;
             margin: 0 auto;
         }
-        
+
         header {
             background-color: var(--primary);
             color: var(--light-text);
@@ -56,13 +49,13 @@
             text-align: center;
             box-shadow: var(--shadow);
         }
-        
+
         nav {
             background-color: var(--primary-dark);
             overflow: hidden;
             margin-bottom: 1rem;
         }
-        
+
         nav a {
             float: left;
             display: block;
@@ -73,15 +66,15 @@
             font-size: 0.9rem;
             transition: background-color 0.3s;
         }
-        
+
         nav a:hover, nav a.active {
             background-color: var(--accent);
         }
-        
+
         h1, h2, h3 {
             margin-bottom: 1rem;
         }
-        
+
         button, .btn {
             background-color: var(--primary);
             color: var(--light-text);
@@ -93,11 +86,11 @@
             font-size: 1rem;
             transition: background-color 0.3s;
         }
-        
+
         button:hover, .btn:hover {
             background-color: var(--primary-dark);
         }
-        
+
         input, select {
             width: 100%;
             padding: 0.7rem;
@@ -106,7 +99,7 @@
             border-radius: 4px;
             font-size: 1rem;
         }
-        
+
         label {
             display: block;
             margin-top: 0.8rem;
@@ -114,22 +107,22 @@
         }
 
         .leaflet-draw-toolbar {
-    margin-top: 45px !important;
-}
+            margin-top: 45px !important;
+        }
 
-.leaflet-control-geocoder {
-    clear: none !important;
-    margin-right: 10px !important;
-}
+        .leaflet-control-geocoder {
+            clear: none !important;
+            margin-right: 10px !important;
+        }
 
-.leaflet-control-geocoder-form input {
-    width: 250px !important;
-}
-        
+        .leaflet-control-geocoder-form input {
+            width: 250px !important;
+        }
+
         .form-group {
             margin-bottom: 1rem;
         }
-        
+
         .card {
             background-color: white;
             border-radius: 8px;
@@ -137,7 +130,7 @@
             padding: 1.5rem;
             margin-bottom: 1.5rem;
         }
-        
+
         .service-item {
             border: 1px solid #ddd;
             border-radius: 4px;
@@ -148,31 +141,31 @@
             justify-content: space-between;
             align-items: center;
         }
-        
+
         .service-info {
             flex-grow: 1;
         }
-        
+
         .hidden {
             display: none;
         }
-        
+
         table {
             width: 100%;
             border-collapse: collapse;
             margin: 1rem 0;
         }
-        
+
         th, td {
             padding: 0.7rem;
             text-align: left;
             border-bottom: 1px solid #ddd;
         }
-        
+
         th {
             background-color: var(--light-bg);
         }
-        
+
         #map {
             width: 100%;
             height: 300px;
@@ -183,66 +176,66 @@
 
 
         .leaflet-control-geocoder {
-    clear: none !important;
-    margin-right: 10px !important;
-}
+            clear: none !important;
+            margin-right: 10px !important;
+        }
 
-.leaflet-control-geocoder-form input {
-    width: 250px !important;
-    padding: 5px !important;
-    border: 1px solid #ccc !important;
-}
+        .leaflet-control-geocoder-form input {
+            width: 250px !important;
+            padding: 5px !important;
+            border: 1px solid #ccc !important;
+        }
 
-.leaflet-control-geocoder-selected {
-    background-color: #f4f4f4 !important;
-    border-radius: 4px !important;
-}
+        .leaflet-control-geocoder-selected {
+            background-color: #f4f4f4 !important;
+            border-radius: 4px !important;
+        }
 
         .leaflet-editing-icon {
-        width: 8px !important;
-        height: 8px !important;
-        margin-left: -4px !important;
-        margin-top: -4px !important;
-        border-radius: 50%;
-        background-color: white;
-        border: 2px solid #1e88e5;
-    }
+            width: 8px !important;
+            height: 8px !important;
+            margin-left: -4px !important;
+            margin-top: -4px !important;
+            border-radius: 50%;
+            background-color: white;
+            border: 2px solid #1e88e5;
+        }
 
-    .leaflet-control-geocoder {
-        max-width: 300px;
-    }
+        .leaflet-control-geocoder {
+            max-width: 300px;
+        }
 
-    .leaflet-control-geocoder-form input {
-        width: 100%;
-        border: 1px solid #ccc;
-        padding: 5px;
-    }
-        
+        .leaflet-control-geocoder-form input {
+            width: 100%;
+            border: 1px solid #ccc;
+            padding: 5px;
+        }
+
         .total {
             font-size: 1.2rem;
             font-weight: bold;
             margin-top: 1rem;
             text-align: right;
         }
-        
+
         .btn-small {
             padding: 0.3rem 0.7rem;
             font-size: 0.8rem;
         }
-        
+
         .btn-danger {
             background-color: #f44336;
         }
-        
+
         .btn-danger:hover {
             background-color: #d32f2f;
         }
-        
+
         @media screen and (min-width: 768px) {
             .container {
                 max-width: 800px;
             }
-            
+
             nav a {
                 padding: 1rem 1.5rem;
                 font-size: 1rem;
@@ -255,13 +248,13 @@
         <h1>PowerWash Pro</h1>
         <p>Quote Generator</p>
     </header>
-    
+
     <nav>
         <a href="#" id="nav-quote" class="active">Create Quote</a>
         <a href="#" id="nav-services">Manage Services</a>
         <a href="#" id="nav-calculator">Area Calculator</a>
     </nav>
-    
+
     <div class="container">
         <!-- Quote Generator Page -->
         <div id="quote-page">
@@ -271,45 +264,45 @@
                     <label for="customer-name">Customer Name:</label>
                     <input type="text" id="customer-name" placeholder="Enter customer name">
                 </div>
-                
+
                 <div class="form-group">
                     <label for="customer-email">Customer Email:</label>
                     <input type="email" id="customer-email" placeholder="Enter customer email">
                 </div>
-                
+
                 <div class="form-group">
                     <label for="customer-phone">Customer Phone:</label>
                     <input type="tel" id="customer-phone" placeholder="Enter customer phone">
                 </div>
-                
+
                 <div class="form-group">
                     <label for="property-address">Property Address:</label>
                     <input type="text" id="property-address" placeholder="Enter property address">
                 </div>
-                
+
                 <h3>Select Services</h3>
                 <div id="service-selection">
                     <p>No services available. Add services in the Manage Services section.</p>
                 </div>
-                
+
                 <div class="form-group">
                     <label for="custom-area">Custom Area (sq ft):</label>
                     <input type="number" id="custom-area" placeholder="Enter area in square feet" value="0">
                     <button id="open-calculator" class="btn">Calculate Area</button>
                 </div>
-                
+
                 <div class="form-group">
                     <label for="notes">Additional Notes:</label>
                     <textarea id="notes" rows="3" style="width: 100%; padding: 0.7rem; margin: 0.5rem 0; border: 1px solid #ddd; border-radius: 4px;"></textarea>
                 </div>
-                
+
                 <div class="total">
                     Total: $<span id="quote-total">0.00</span>
                 </div>
-                
+
                 <button id="generate-quote" class="btn">Generate Quote</button>
             </div>
-            
+
             <div id="quote-result" class="card hidden">
                 <h2>Quote Summary</h2>
                 <div id="quote-details"></div>
@@ -317,7 +310,7 @@
                 <button id="new-quote" class="btn">Create New Quote</button>
             </div>
         </div>
-        
+
         <!-- Manage Services Page -->
         <div id="services-page" class="hidden">
             <div class="card">
@@ -327,7 +320,7 @@
                         <label for="service-name">Service Name:</label>
                         <input type="text" id="service-name" required placeholder="e.g., House Exterior Wash">
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="price-type">Price Type:</label>
                         <select id="price-type">
@@ -335,21 +328,21 @@
                             <option value="sqft">Per Square Foot</option>
                         </select>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="service-price">Price ($):</label>
                         <input type="number" id="service-price" step="0.01" required placeholder="Enter price">
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="service-description">Description:</label>
                         <textarea id="service-description" rows="2" placeholder="Enter service description" style="width: 100%; padding: 0.7rem; margin: 0.5rem 0; border: 1px solid #ddd; border-radius: 4px;"></textarea>
                     </div>
-                    
+
                     <button type="submit" class="btn">Add Service</button>
                 </form>
             </div>
-            
+
             <div class="card">
                 <h2>Your Services</h2>
                 <div id="services-list">
@@ -357,16 +350,15 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Area Calculator Page -->
         <div id="calculator-page" class="hidden">
             <div class="card">
                 <h2>Area Calculator</h2>
                 <p>Use the map to calculate the area of a property:</p>
-                
+
                 <div id="map"></div>
-                
-                
+
                 <div class="instructions">
                     <p>Instructions:</p>
                     <ol>
@@ -376,7 +368,7 @@
                         <li>The calculated area will appear below</li>
                     </ol>
                 </div>
-                
+
                 <div class="form-group">
                     <label>Calculated Area:</label>
                     <p id="calculated-area">0 sq ft</p>
@@ -385,16 +377,62 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> <!-- End of .container -->
 
+
+    <!-- Load Leaflet JS (Keep only one set) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-draw/1.0.4/leaflet.draw.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-control-geocoder/2.4.0/Control.Geocoder.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol/dist/L.Control.Locate.min.js" charset="utf-8"></script>
+
+
+    <!-- Load Firebase SDKs -->
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
+
+
+    <!-- Firebase Configuration and Initialization -->
     <script>
-        // Global variables
-        let services = [];
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        const firebaseConfig = {
+            apiKey: "AIzaSyDAUFXfQzSsXvwhDGJd5zhAB47xzDo7ahc", // <-- Your API Key (looks correct)
+            authDomain: "quote-a0a90.firebaseapp.com",
+            projectId: "quote-a0a90",
+            storageBucket: "quote-a0a90.firebasestorage.app",
+            messagingSenderId: "797986357681",
+            appId: "1:797986357681:web:2f868fa59b17ccf5127d90",
+            measurementId: "G-0DWW40906C" // Can remove if not using Analytics
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        console.log("Firebase app initialized!");
+
+        // Get references to Firebase services you will use
+        const database = firebase.database();
+        const servicesRef = database.ref('services');
+        const quotesRef = database.ref('quotes'); // Reference to save quotes
+
+        // Ensure L.GeometryUtil exists before initMap runs
+        // (This is part of leaflet-draw, usually available after its script loads)
+        if (typeof L.GeometryUtil === 'undefined') {
+            console.warn("Leaflet.GeometryUtil not found. Area calculation may fail.");
+             // Provide a fallback or error handling if needed
+        }
+
+    </script>
+
+    <!-- Your main application script -->
+    <script>
+        // Global variables (synced with Firebase by listeners)
+        let services = []; // This will be populated by the Firebase listener
         let selectedServices = [];
         let currentArea = 0;
         let map = null;
         let drawnItems = null;
-        
+        let searchMarker = null; // Variable to store the marker from geocoder search
+
         // DOM Elements
         const navQuote = document.getElementById('nav-quote');
         const navServices = document.getElementById('nav-services');
@@ -416,7 +454,7 @@
         const copyQuote = document.getElementById('copy-quote');
         const newQuote = document.getElementById('new-quote');
         const addServiceForm = document.getElementById('add-service-form');
-        
+
         // Navigation
         navQuote.addEventListener('click', (e) => {
             e.preventDefault();
@@ -429,224 +467,246 @@
             showPage(servicesPage);
             setActiveNav(navServices);
         });
-        
+
         navCalculator.addEventListener('click', (e) => {
             e.preventDefault();
             showPage(calculatorPage);
             setActiveNav(navCalculator);
-            initMap();
+            initMap(); // Initialize map when calculator page is accessed
         });
-        
+
         openCalculator.addEventListener('click', (e) => {
             e.preventDefault();
             showPage(calculatorPage);
             setActiveNav(navCalculator);
-            initMap();
+            initMap(); // Initialize map when button is clicked
         });
-        
+
         function showPage(page) {
             quotePage.classList.add('hidden');
             servicesPage.classList.add('hidden');
             calculatorPage.classList.add('hidden');
             page.classList.remove('hidden');
         }
-        
+
         function setActiveNav(navLink) {
             navQuote.classList.remove('active');
             navServices.classList.remove('active');
             navCalculator.classList.remove('active');
             navLink.classList.add('active');
         }
-        
-        function loadServices() {
-            // Get a reference to the 'services' node in your database
-            const servicesRef = firebase.database().ref('services');
 
-            // Listen for changes to the data in the 'services' node
-            // The 'value' event fires once initially and then again whenever the data changes
+        // Load services from Firebase Realtime Database
+        // This sets up a listener that keeps the local `services` array in sync
+        function loadServices() {
             servicesRef.on('value', (snapshot) => {
                 services = []; // Clear the local array
-
-                // Iterate over the data received from Firebase
                 snapshot.forEach((childSnapshot) => {
-                    // Get the data for each service
                     const service = childSnapshot.val();
-
-                    // Firebase .push() automatically generates a unique key (ID)
-                    // Use this key as the service ID
-                    service.id = childSnapshot.key;
-
-                    // Add the service to our local array
+                    service.id = childSnapshot.key; // Use Firebase's key as the service ID
                     services.push(service);
                 });
 
                 console.log("Services loaded from Firebase:", services);
 
-                // After loading, render the lists and calculate total
+                // After loading/updating, render the lists and calculate total
                 renderServicesList();
                 renderServiceSelection();
-                calculateTotal(); // Update total after loading services
+                calculateTotal(); // Update total after services load/change
             }, (error) => {
-                // Handle any errors during data loading
                 console.error("Error loading services from Firebase:", error);
-                // Optional: Display an error message to the user
-                // alert("Failed to load services.");
-                 servicesList.innerHTML = '<p style="color: red;">Error loading services.</p>'; // Display error message
-                 serviceSelection.innerHTML = '<p style="color: red;">Error loading services.</p>';
-                 calculateTotal();
+                servicesList.innerHTML = '<p style="color: red;">Error loading services.</p>';
+                serviceSelection.innerHTML = '<p style="color: red;">Error loading services.</p>';
+                calculateTotal(); // Reset total on load error
             });
-        
-        // Save services to local storage
-        function saveServices() {
-            localStorage.setItem('powerwashServices', JSON.stringify(services));
+             // The listener remains active unless detached (`servicesRef.off('value', ...)`)
         }
-        
-        // Add a new service
+
+        // saveServices function is removed, Firebase handles persistence
+
+
+        // Add a new service (Uses Firebase Realtime Database)
         addServiceForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            
+
             const name = document.getElementById('service-name').value.trim();
             const priceType = document.getElementById('price-type').value;
             const price = parseFloat(document.getElementById('service-price').value);
             const description = document.getElementById('service-description').value.trim();
-            
-            if (name && price) {
-                const newService = {
-                    id: Date.now().toString(),
-                    name,
-                    priceType,
-                    price,
-                    description
+
+            if (name && !isNaN(price) && price >= 0) { // Validate price is a non-negative number
+                const newServiceData = {
+                    // No 'id' needed here, Firebase .push() generates the key
+                    name: name,
+                    priceType: priceType,
+                    price: price,
+                    description: description || '' // Save empty string if no description
                 };
-                
-                services.push(newService);
-                saveServices();
-                renderServicesList();
-                renderServiceSelection();
-                
-                // Reset form
-                addServiceForm.reset();
+
+                // Push the new service data to the 'services' node in Firebase
+                servicesRef.push(newServiceData)
+                    .then(() => {
+                        console.log("Service added successfully to Firebase");
+                        addServiceForm.reset(); // Reset form only on success
+                    })
+                    .catch((error) => {
+                        console.error("Error adding service to Firebase:", error);
+                        alert("Failed to add service. Please check console and Firebase rules.");
+                    });
+                // The `loadServices` listener handles updating the UI after data changes in Firebase
+            } else {
+                 alert("Please enter a valid service name and price.");
             }
         });
-        
-        // Render services list
+
+
+        // Render services list (Uses the `services` array populated by the Firebase listener)
         function renderServicesList() {
-            if (services.length === 0) {
-                servicesList.innerHTML = '<p>No services available. Add your first service above.</p>';
-                return;
-            }
-            
-            servicesList.innerHTML = '';
-            services.forEach(service => {
-                const serviceItem = document.createElement('div');
-                serviceItem.className = 'service-item';
-                
-                const serviceInfo = document.createElement('div');
-                serviceInfo.className = 'service-info';
-                
-                const priceText = service.priceType === 'flat' 
-                    ? `$${service.price.toFixed(2)}` 
-                    : `$${service.price.toFixed(2)} per sq ft`;
-                
-                serviceInfo.innerHTML = `
-                    <h3>${service.name}</h3>
-                    <p>${priceText}</p>
-                    <p>${service.description}</p>
-                `;
-                
-                const actionButtons = document.createElement('div');
-                
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'btn btn-danger btn-small';
-                deleteBtn.textContent = 'Delete';
-                deleteBtn.addEventListener('click', () => {
-                    deleteService(service.id);
-                });
-                
-                actionButtons.appendChild(deleteBtn);
-                serviceItem.appendChild(serviceInfo);
-                serviceItem.appendChild(actionButtons);
-                servicesList.appendChild(serviceItem);
-            });
-        }
-        
-        // Delete a service
+             if (services.length === 0) {
+                 servicesList.innerHTML = '<p>No services available. Add your first service above.</p>';
+                 return;
+             }
+
+             servicesList.innerHTML = '';
+             services.forEach(service => {
+                 const serviceItem = document.createElement('div');
+                 serviceItem.className = 'service-item';
+
+                 const serviceInfo = document.createElement('div');
+                 serviceInfo.className = 'service-info';
+
+                 // Use parseFloat in case price comes as a string from Firebase
+                 const priceText = service.priceType === 'flat'
+                     ? `$${parseFloat(service.price).toFixed(2)}`
+                     : `$${parseFloat(service.price).toFixed(2)} per sq ft`;
+
+                 serviceInfo.innerHTML = `
+                     <h3>${service.name || 'Unnamed Service'}</h3>
+                     <p>${priceText}</p>
+                     <p>${service.description || ''}</p>
+                 `;
+
+                 const actionButtons = document.createElement('div');
+
+                 const deleteBtn = document.createElement('button');
+                 deleteBtn.className = 'btn btn-danger btn-small';
+                 deleteBtn.textContent = 'Delete';
+                 // Pass the Firebase generated ID (which is stored in service.id)
+                 deleteBtn.addEventListener('click', () => {
+                     deleteService(service.id);
+                 });
+
+                 actionButtons.appendChild(deleteBtn);
+                 serviceItem.appendChild(serviceInfo);
+                 serviceItem.appendChild(actionButtons);
+                 servicesList.appendChild(serviceItem);
+             });
+         }
+
+        // Delete a service (Uses Firebase Realtime Database)
         function deleteService(id) {
-            services = services.filter(service => service.id !== id);
-            saveServices();
-            renderServicesList();
-            renderServiceSelection();
-            calculateTotal();
-        }
-        
-        // Render service selection for quotes
-        function renderServiceSelection() {
-            if (services.length === 0) {
-                serviceSelection.innerHTML = '<p>No services available. Add services in the Manage Services section.</p>';
-                return;
-            }
-            
-            serviceSelection.innerHTML = '';
-            services.forEach(service => {
-                const serviceCheck = document.createElement('div');
-                serviceCheck.className = 'form-group';
-                
-                const priceText = service.priceType === 'flat' 
-                    ? `$${service.price.toFixed(2)}` 
-                    : `$${service.price.toFixed(2)} per sq ft`;
-                
-                serviceCheck.innerHTML = `
-                    <label>
-                        <input type="checkbox" class="service-checkbox" data-id="${service.id}">
-                        ${service.name} (${priceText})
-                    </label>
-                `;
-                
-                serviceSelection.appendChild(serviceCheck);
-            });
-            
-            // Add event listeners to checkboxes
-            document.querySelectorAll('.service-checkbox').forEach(checkbox => {
-                checkbox.addEventListener('change', () => {
-                    updateSelectedServices();
-                    calculateTotal();
+            // Ensure id is not null or undefined before trying to delete
+             if (!id) {
+                 console.error("Cannot delete service: Invalid ID provided.", id);
+                 return;
+             }
+            // Remove the child node with the given ID from the 'services' node
+            servicesRef.child(id).remove()
+                .then(() => {
+                    console.log(`Service with ID ${id} deleted successfully from Firebase`);
+                     // The loadServices listener automatically updates the UI
+                })
+                .catch((error) => {
+                    console.error(`Error deleting service with ID ${id} from Firebase:`, error);
+                    alert("Failed to delete service. See console for details or check Firebase rules.");
                 });
-            });
+             // No local array manipulation or UI re-renders needed here,
+             // the 'value' listener on `servicesRef` handles it when Firebase updates.
         }
-        
-        // Update selected services array based on checkboxes
+
+
+        // Render service selection for quotes (Uses the `services` array)
+        function renderServiceSelection() {
+             if (services.length === 0) {
+                 serviceSelection.innerHTML = '<p>No services available. Add services in the Manage Services section.</p>';
+                 return;
+             }
+
+             serviceSelection.innerHTML = '';
+             services.forEach(service => {
+                 const serviceCheck = document.createElement('div');
+                 serviceCheck.className = 'form-group';
+
+                 const priceText = service.priceType === 'flat'
+                     ? `$${parseFloat(service.price).toFixed(2)}`
+                     : `$${parseFloat(service.price).toFixed(2)} per sq ft`;
+
+                 serviceCheck.innerHTML = `
+                     <label>
+                         <input type="checkbox" class="service-checkbox" data-id="${service.id}">
+                         ${service.name || 'Unnamed Service'} (${priceText})
+                     </label>
+                 `;
+
+                 serviceSelection.appendChild(serviceCheck);
+             });
+
+             // Re-add event listeners to checkboxes every time the list is rendered
+             document.querySelectorAll('.service-checkbox').forEach(checkbox => {
+                 checkbox.addEventListener('change', () => {
+                     updateSelectedServices();
+                     calculateTotal();
+                 });
+                 // Also set initial checked state based on `selectedServices` array if needed
+                 const serviceId = checkbox.getAttribute('data-id');
+                 if (selectedServices.find(s => s.id === serviceId)) {
+                    checkbox.checked = true;
+                 }
+             });
+             // Recalculate total initially after rendering selection
+             updateSelectedServices();
+             calculateTotal();
+         }
+
+        // Update selected services array based on checkboxes (No Firebase needed)
         function updateSelectedServices() {
-            selectedServices = [];
-            document.querySelectorAll('.service-checkbox:checked').forEach(checkbox => {
-                const serviceId = checkbox.getAttribute('data-id');
-                const service = services.find(s => s.id === serviceId);
-                if (service) {
-                    selectedServices.push(service);
-                }
-            });
-        }
-        
-        // Calculate total quote amount
+             selectedServices = []; // Clear previous selection
+             document.querySelectorAll('.service-checkbox:checked').forEach(checkbox => {
+                 const serviceId = checkbox.getAttribute('data-id');
+                 const service = services.find(s => s.id === serviceId);
+                 if (service) {
+                     selectedServices.push(service);
+                 }
+             });
+         }
+
+        // Calculate total quote amount (No Firebase needed - calculates based on local data)
         function calculateTotal() {
             let total = 0;
+            // Use a safe default for customArea value
             const area = parseFloat(customArea.value) || 0;
-            
+
             selectedServices.forEach(service => {
+                const servicePrice = parseFloat(service.price);
+                if (isNaN(servicePrice)) {
+                     console.warn("Invalid service price found:", service.price);
+                     return; // Skip this service if price is invalid
+                }
                 if (service.priceType === 'flat') {
-                    total += service.price;
+                    total += servicePrice;
                 } else {
-                    total += service.price * area;
+                    total += servicePrice * area;
                 }
             });
-            
+
             quoteTotal.textContent = total.toFixed(2);
             return total;
         }
-        
+
         // Listen for custom area changes
         customArea.addEventListener('input', calculateTotal);
-        
-        // Generate Quote
+
+        // Generate Quote and Save to Firebase
         generateQuote.addEventListener('click', () => {
             const customerName = document.getElementById('customer-name').value.trim();
             const customerEmail = document.getElementById('customer-email').value.trim();
@@ -655,395 +715,434 @@
             const notes = document.getElementById('notes').value.trim();
             const area = parseFloat(customArea.value) || 0;
             const total = calculateTotal();
-            
+
             if (!customerName) {
                 alert('Please enter a customer name.');
                 return;
             }
-            
+
             if (selectedServices.length === 0) {
                 alert('Please select at least one service.');
                 return;
             }
-            
+
             const date = new Date().toLocaleDateString();
-            
-            let quoteHTML = `
-                <div style="margin-bottom: 1rem;">
-                    <strong>Date:</strong> ${date}<br>
-                    <strong>Customer:</strong> ${customerName}<br>
-                    ${customerEmail ? `<strong>Email:</strong> ${customerEmail}<br>` : ''}
-                    ${customerPhone ? `<strong>Phone:</strong> ${customerPhone}<br>` : ''}
-                    ${propertyAddress ? `<strong>Address:</strong> ${propertyAddress}<br>` : ''}
-                    ${area > 0 ? `<strong>Area:</strong> ${area} sq ft<br>` : ''}
-                </div>
-                
-                <h3>Selected Services:</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Service</th>
-                            <th>Price</th>
-                            <th>Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-            
-            selectedServices.forEach(service => {
-                let serviceTotal;
-                let priceText;
-                
-                if (service.priceType === 'flat') {
-                    serviceTotal = service.price;
-                    priceText = `$${service.price.toFixed(2)}`;
-                } else {
-                    serviceTotal = service.price * area;
-                    priceText = `$${service.price.toFixed(2)} per sq ft × ${area} sq ft`;
-                }
-                
-                quoteHTML += `
-                    <tr>
-                        <td>${service.name}</td>
-                        <td>${priceText}</td>
-                        <td>$${serviceTotal.toFixed(2)}</td>
-                    </tr>
-                `;
-            });
-            
-            quoteHTML += `
-                    </tbody>
-                </table>
-                
-                <div class="total">
-                    <strong>Total Amount: $${total.toFixed(2)}</strong>
-                </div>
-                
-                ${notes ? `<div style="margin-top: 1rem;"><strong>Notes:</strong><br>${notes}</div>` : ''}
-            `;
-            
-            quoteDetails.innerHTML = quoteHTML;
-            quoteResult.classList.remove('hidden');
+            const timestamp = new Date().toISOString(); // More precise time for sorting if needed
+
+            // Data structure to save the quote to Firebase
+            const quoteDataToSave = {
+                customerName: customerName,
+                customerEmail: customerEmail,
+                customerPhone: customerPhone,
+                propertyAddress: propertyAddress,
+                // Save just the IDs and potentially names/prices of selected services
+                // to link back, or save a snapshot of the service details.
+                // Saving the current details is simpler for historical quotes:
+                selectedServices: selectedServices.map(service => ({
+                    id: service.id, // Firebase key ID
+                    name: service.name,
+                    priceType: service.priceType,
+                    price: parseFloat(service.price), // Ensure number
+                    description: service.description || ''
+                })),
+                area: area,
+                notes: notes,
+                total: total, // Save the final calculated total
+                dateCreated: timestamp // Use ISO timestamp for consistent ordering
+                // Add any other relevant data like user ID if using authentication
+            };
+
+             // Save the quote data to the 'quotes' node in Firebase
+             quotesRef.push(quoteDataToSave)
+                .then((newQuoteRef) => {
+                    console.log("Quote saved successfully to Firebase with ID:", newQuoteRef.key);
+                    alert("Quote generated and saved!");
+                    // After saving, you might want to clear the form or show a summary
+                     // build and display the HTML summary
+                    let quoteHTML = `
+                        <div style="margin-bottom: 1rem;">
+                            <strong>Date:</strong> ${date}<br>
+                            <strong>Customer:</strong> ${customerName}<br>
+                            ${customerEmail ? `<strong>Email:</strong> ${customerEmail}<br>` : ''}
+                            ${customerPhone ? `<strong>Phone:</strong> ${customerPhone}<br>` : ''}
+                            ${propertyAddress ? `<strong>Address:</strong> ${propertyAddress}<br>` : ''}
+                            ${area > 0 ? `<strong>Area:</strong> ${area} sq ft<br>` : ''}
+                        </div>
+
+                        <h3>Selected Services:</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Service</th>
+                                    <th>Price</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+
+                    selectedServices.forEach(service => {
+                        let serviceTotal;
+                        let priceText;
+
+                        const servicePrice = parseFloat(service.price);
+
+                        if (service.priceType === 'flat') {
+                            serviceTotal = servicePrice;
+                            priceText = `$${servicePrice.toFixed(2)}`;
+                        } else {
+                            serviceTotal = servicePrice * area;
+                            priceText = `$${servicePrice.toFixed(2)} per sq ft × ${area} sq ft`;
+                        }
+
+                        quoteHTML += `
+                            <tr>
+                                <td>${service.name}</td>
+                                <td>${priceText}</td>
+                                <td>$${serviceTotal.toFixed(2)}</td>
+                            </tr>
+                        `;
+                    });
+
+                    quoteHTML += `
+                            </tbody>
+                        </table>
+
+                        <div class="total">
+                            <strong>Total Amount: $${total.toFixed(2)}</strong>
+                        </div>
+
+                        ${notes ? `<div style="margin-top: 1rem;"><strong>Notes:</strong><br>${notes}</div>` : ''}
+                    `;
+
+                    quoteDetails.innerHTML = quoteHTML;
+                    quoteResult.classList.remove('hidden');
+
+                })
+                .catch((error) => {
+                    console.error("Error saving quote:", error);
+                    alert("Failed to save quote. See console for details or check Firebase rules.");
+
+                     // Still show the quote summary even if saving fails
+                    let quoteHTML = `
+                        <div style="margin-bottom: 1rem;">
+                            <strong>Date:</strong> ${date}<br>
+                            <strong>Customer:</strong> ${customerName}<br>
+                            ${customerEmail ? `<strong>Email:</strong> ${customerEmail}<br>` : ''}
+                            ${customerPhone ? `<strong>Phone:</strong> ${customerPhone}<br>` : ''}
+                            ${propertyAddress ? `<strong>Address:</strong> ${propertyAddress}<br>` : ''}
+                            ${area > 0 ? `<strong>Area:</strong> ${area} sq ft<br>` : ''}
+                        </div>
+
+                        <h3>Selected Services:</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Service</th>
+                                    <th>Price</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+
+                    selectedServices.forEach(service => {
+                         let serviceTotal;
+                         let priceText;
+
+                        const servicePrice = parseFloat(service.price);
+
+                         if (service.priceType === 'flat') {
+                             serviceTotal = servicePrice;
+                             priceText = `$${servicePrice.toFixed(2)}`;
+                         } else {
+                             serviceTotal = servicePrice * area;
+                             priceText = `$${servicePrice.toFixed(2)} per sq ft × ${area} sq ft`;
+                         }
+
+                         quoteHTML += `
+                             <tr>
+                                 <td>${service.name}</td>
+                                 <td>${priceText}</td>
+                                 <td>$${serviceTotal.toFixed(2)}</td>
+                             </tr>
+                         `;
+                     });
+
+                     quoteHTML += `
+                             </tbody>
+                         </table>
+
+                         <div class="total">
+                             <strong>Total Amount: $${total.toFixed(2)}</strong>
+                         </div>
+
+                         ${notes ? `<div style="margin-top: 1rem;"><strong>Notes:</strong><br>${notes}</div>` : ''}
+                         <p style="color:red; margin-top: 1em;">Error saving quote to database.</p> <!-- Add error message to display -->
+                     `;
+                     quoteDetails.innerHTML = quoteHTML;
+                     quoteResult.classList.remove('hidden');
+                });
+
         });
-        
+
         // Copy quote to clipboard
         copyQuote.addEventListener('click', () => {
-            const quoteText = quoteDetails.innerText;
-            navigator.clipboard.writeText(quoteText)
-                .then(() => {
-                    alert('Quote copied to clipboard');
-                })
-                .catch(err => {
-                    console.error('Failed to copy quote: ', err);
-                    alert('Failed to copy quote. Try selecting and copying manually.');
-                });
-        });
-        
+             // Get text from the div (preserving some structure)
+             const quoteContentDiv = document.getElementById('quote-details');
+             const quoteText = quoteContentDiv.innerText; // or maybe outerHTML depending on desired format
+             navigator.clipboard.writeText(quoteText)
+                 .then(() => {
+                     alert('Quote summary copied to clipboard');
+                 })
+                 .catch(err => {
+                     console.error('Failed to copy quote: ', err);
+                     alert('Failed to copy quote summary.');
+                 });
+         });
+
         // New quote button
         newQuote.addEventListener('click', () => {
+             // Clear all quote form fields
             document.getElementById('customer-name').value = '';
             document.getElementById('customer-email').value = '';
             document.getElementById('customer-phone').value = '';
             document.getElementById('property-address').value = '';
             document.getElementById('notes').value = '';
             customArea.value = '0';
-            
+
+             // Uncheck all service checkboxes
             document.querySelectorAll('.service-checkbox').forEach(checkbox => {
                 checkbox.checked = false;
             });
-            
-            selectedServices = [];
-            calculateTotal();
-            quoteResult.classList.add('hidden');
-        });
-        
-        // OpenStreetMap with Leaflet implementation
+
+            selectedServices = []; // Clear selected services array
+            calculateTotal(); // Recalculate total (should be 0)
+            quoteResult.classList.add('hidden'); // Hide the quote result section
+         });
+
+
+        // OpenStreetMap with Leaflet implementation (Restored from working version)
         function initMap() {
             // Initialize map only once
             if (!map) {
-                // Create the map in the 'map' div
-                // Create the map
-        map = L.map('map').setView([30.0971621, -95.6160549], 15);
-        
-        // Define base maps
-        const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors'
-});
+                // Create the map centered near Houston, TX
+                map = L.map('map').setView([30.0971621, -95.6160549], 15);
 
-        const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-    attribution: '© Esri'
-});
+                // Define base maps
+                const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors'
+                });
 
-// Building outlines layer
-const buildings = L.tileLayer('https://tiles.stadiamaps.com/tiles/outdoors/{z}/{x}/{y}.png', {
-    attribution: '© Stadia Maps',
-    opacity: 1,
-    className: 'building-outlines'
-});
+                const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                    attribution: '© Esri'
+                });
 
-// Add custom CSS for building outlines
-const style = document.createElement('style');
-style.textContent = `
-    .building-outlines {
-        mix-blend-mode: multiply;
-        filter: grayscale(100%) brightness(40%) contrast(200%);
-    }
-`;
-document.head.appendChild(style);
+                // Building outlines layer
+                const buildings = L.tileLayer('https://tiles.stadiamaps.com/tiles/outdoors/{z}/{x}/{y}.png', {
+                    attribution: '© Stadia Maps',
+                    opacity: 1,
+                    className: 'building-outlines'
+                });
 
-// Create hybrid layer group (now using OSM as base instead of satellite)
-const hybrid = L.layerGroup([
-    osm,
-    buildings
-]);
+                // Add custom CSS for building outlines dynamically (Keep in style block or use class)
+                // Moved this CSS rule to the main style block in <head> for clarity
 
-const baseMaps = {
-    "Street": osm,
-    "Satellite": satellite,
-    "Hybrid (with Buildings)": hybrid
-};
+                // Create hybrid layer group
+                const hybrid = L.layerGroup([osm, buildings]);
 
-// Add default layer
-osm.addTo(map);
+                const baseMaps = {
+                    "Street": osm,
+                    "Satellite": satellite,
+                    "Hybrid (with Buildings)": hybrid
+                };
 
-// Add layer control
-L.control.layers(baseMaps).addTo(map);
+                // Add default layer (e.g., OSM)
+                osm.addTo(map);
 
-        // Initialize FeatureGroup for drawn items
-        drawnItems = new L.FeatureGroup();
-        map.addLayer(drawnItems);
-        
-        // Initialize the draw control with smaller vertices
-        const drawControl = new L.Control.Draw({
-            draw: {
-                polyline: false,
-                rectangle: false,
-                circle: false,
-                circlemarker: false,
-                marker: false,
-                polygon: {
-                    allowIntersection: false,
-                    drawError: {
-                        color: '#e1e100',
-                        message: '<strong>Error:</strong> Polygon edges cannot cross!'
+                // Add layer control
+                L.control.layers(baseMaps).addTo(map);
+
+                // Initialize FeatureGroup for drawn items
+                drawnItems = new L.FeatureGroup();
+                map.addLayer(drawnItems);
+
+                // Initialize the draw control with custom options
+                const drawControl = new L.Control.Draw({
+                    draw: {
+                        polyline: false,
+                        rectangle: false,
+                        circle: false,
+                        circlemarker: false,
+                        marker: false, // Markers are added by the geocoder
+                        polygon: {
+                            allowIntersection: false,
+                            drawError: {
+                                color: '#e1e100',
+                                message: '<strong>Error:</strong> Polygon edges cannot cross!'
+                            },
+                            shapeOptions: {
+                                color: '#1e88e5',
+                                weight: 2
+                            }
+                             // Vertice icon styling is done via CSS classes applied by Leaflet.draw
+                             // The `.leaflet-editing-icon` CSS rules you already have will style them.
+                        }
                     },
-                    shapeOptions: {
-                        color: '#1e88e5',
-                        weight: 2
-                    },
-                    icon: new L.DivIcon({
-                        iconSize: new L.Point(8, 8),
-                        className: 'leaflet-div-icon leaflet-editing-icon'
-                    })
-                }
-            },
-            edit: {
-                featureGroup: drawnItems,
-                remove: true,
-                edit: {
-                    selectedPathOptions: {
-                        maintainColor: true,
-                        icon: new L.DivIcon({
-                            iconSize: new L.Point(8, 8),
-                            className: 'leaflet-div-icon leaflet-editing-icon'
-                        })
+                    edit: {
+                        featureGroup: drawnItems,
+                        remove: true,
+                        // The editing icon styles are handled by `.leaflet-editing-icon` CSS
                     }
-                }
-            }
-        });
-        map.addControl(drawControl);
+                });
+                map.addControl(drawControl);
 
-        // Add geocoder control in top-right corner
-        let searchMarker = null;
+                // Add geocoder control in top-right corner (This replaces the need for a separate input/button)
+                 // Make sure `geocoder` object is defined before using its methods
+                const geocoderControl = L.Control.geocoder({
+                    position: 'topright',
+                    defaultMarkGeocode: false, // We handle zooming and marker manually below
+                    placeholder: 'Search address...',
+                    collapsed: true // Start collapsed to save space
+                }).addTo(map);
 
-const geocoder = L.Control.geocoder({
-    position: 'topright',
-    defaultMarkGeocode: false,
-    placeholder: 'Search address...',
-    collapsed: false
-}).addTo(map);
+                // Event handler for when an address is found via the geocoder control's search box
+                geocoderControl.on('markgeocode', function(e) {
+                     const result = e.geocode;
+                     const bbox = result.bbox; // Bounding box of the result
 
-geocoder.on('markgeocode', function(e) {
-    const bbox = e.geocode.bbox;
-    const poly = L.polygon([
-        bbox.getSouthEast(),
-        bbox.getNorthEast(),
-        bbox.getNorthWest(),
-        bbox.getSouthWest()
-    ]);
-    
-    // Remove previous marker if it exists
-    if (searchMarker) {
-        map.removeLayer(searchMarker);
-    }
-    
-    // Add marker at the location
-    searchMarker = L.marker(e.geocode.center).addTo(map);
-    searchMarker.bindPopup(e.geocode.name).openPopup();
-    
-    // Zoom to location
-    map.fitBounds(poly.getBounds());
-});
-                
+                     // Remove previous search marker if it exists
+                     if (searchMarker) {
+                        map.removeLayer(searchMarker);
+                     }
+
+                    // Add a new marker at the found location's center
+                     searchMarker = L.marker(result.center).addTo(map);
+                     searchMarker.bindPopup(result.name).openPopup(); // Add a popup with the address name
+
+                    // Zoom to the bounding box of the result
+                     map.fitBounds(bbox);
+
+                     // Optional: Auto-fill the quote form address field
+                    // document.getElementById('property-address').value = result.name;
+                 });
+
+
                 // Event handler for when drawing is completed
                 map.on('draw:created', function(e) {
                     const layer = e.layer;
-                    
+
                     // Clear previous polygons
                     drawnItems.clearLayers();
-                    
+
                     // Add the new polygon
                     drawnItems.addLayer(layer);
-                    
-                    // Calculate the area (in square meters)
-                    const areaInSqMeters = L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
-                    const areaInSqFt = Math.round(areaInSqMeters * 10.764); // Convert m² to ft²
-                    
+
+                     // Calculate the area (in square meters) - Assumes L.GeometryUtil is available
+                     // layer.getLatLngs() returns an array of coordinate arrays for polygons
+                    const areaInSqMeters = L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]); // Use [0] for the main polygon boundary
+                    const areaInSqFt = Math.round(areaInSqMeters * 10.7639); // Convert m² to ft² using more precise conversion
+
                     calculatedArea.textContent = `${areaInSqFt} sq ft`;
                     currentArea = areaInSqFt;
                 });
-                
+
                 // Event handler for when a shape is edited
                 map.on('draw:edited', function(e) {
-                    const layers = e.layers;
-                    let areaInSqFt = 0;
-                    
-                    layers.eachLayer(function(layer) {
-                        const areaInSqMeters = L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
-                        areaInSqFt = Math.round(areaInSqMeters * 10.764); // Convert m² to ft²
+                    // Recalculate area after edit
+                     e.layers.eachLayer(function(layer) {
+                         if (layer instanceof L.Polygon) { // Ensure it's a polygon
+                             const areaInSqMeters = L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
+                             const areaInSqFt = Math.round(areaInSqMeters * 10.7639);
+                             calculatedArea.textContent = `${areaInSqFt} sq ft`;
+                             currentArea = areaInSqFt;
+                         }
                     });
-                    
-                    calculatedArea.textContent = `${areaInSqFt} sq ft`;
-                    currentArea = areaInSqFt;
                 });
-                
+
                 // Event handler for when a shape is deleted
                 map.on('draw:deleted', function(e) {
-                    calculatedArea.textContent = '0 sq ft';
-                    currentArea = 0;
+                     // Reset calculated area if the drawn polygon is deleted
+                     if (drawnItems.getLayers().length === 0) { // Check if no layers are left
+                        calculatedArea.textContent = '0 sq ft';
+                        currentArea = 0;
+                    }
                 });
 
 
-        geocoder.on('markgeocode', function(e) {
-    const center = e.geocode.center;
-    map.setView(center, 18);
-});
-                
-                // Add search button functionality
-                document.getElementById('search-button').addEventListener('click', function() {
-    const address = document.getElementById('search-address').value;
-    if (address) {
-        geocoder.geocode(address, function(results) {
-            if (results && results.length > 0) {
-                const result = results[0];
-                
-                // Remove previous marker if it exists
-                if (searchMarker) {
-                    map.removeLayer(searchMarker);
-                }
-                
-                // Add marker at the location
-                searchMarker = L.marker([result.center.lat, result.center.lng]).addTo(map);
-                searchMarker.bindPopup(result.name).openPopup();
-                
-                map.setView([result.center.lat, result.center.lng], 18);
-            } else {
-                alert('Address not found. Please try again.');
-            }
-        });
-    }
-});
-                
                 // Fix for map rendering issues
                 setTimeout(function() {
-                    map.invalidateSize();
+                    if(map) map.invalidateSize();
                 }, 100);
             } else {
-                // If map already exists, just invalidate size to ensure proper rendering
+                 // If map already exists, just invalidate size on subsequent views
                 setTimeout(function() {
-                    map.invalidateSize();
+                    if(map) map.invalidateSize();
                 }, 100);
+                 // Optionally clear old layers if switching back and forth, or reset UI
+                 // if (drawnItems) drawnItems.clearLayers();
+                 // calculatedArea.textContent = '0 sq ft';
+                 // currentArea = 0;
+                 // if (searchMarker) map.removeLayer(searchMarker);
             }
         }
-        
+
         // Use calculated area
         useArea.addEventListener('click', () => {
-            customArea.value = currentArea;
+            customArea.value = currentArea; // Transfer calculated area to the input
+            showPage(quotePage); // Switch back to quote page
+            setActiveNav(navQuote);
+            calculateTotal(); // Recalculate total on quote page based on new area
+        });
+
+        // Reset area and clear drawn layer
+        resetArea.addEventListener('click', () => {
+            if (drawnItems) {
+                drawnItems.clearLayers(); // Clear all drawn layers from the map
+            }
+             // Reset displayed area and current area variable
+            calculatedArea.textContent = '0 sq ft';
+            currentArea = 0;
+            calculateTotal(); // Recalculate total on quote page (resets area input)
+             // If needed, reset custom area input value here as well
+             customArea.value = 0;
+        });
+
+
+        // addExampleServices function is commented out because you should manage services via the app now
+        // If you need to add initial data, you can uncomment it and run it once,
+        // ensuring it writes to Firebase, then comment it out again.
+        // function addExampleServices() {
+        //     if (services.length === 0) { // Check local array first, will be empty on first load
+        //          // Check if 'services' node exists/has children in Firebase if needed
+        //         servicesRef.once('value').then(snapshot => {
+        //             if (!snapshot.exists()) { // Only add examples if Firebase is empty
+        //                 const initialServices = [ ... ]; // Your example service objects
+        //                 initialServices.forEach(service => {
+        //                      // Write each example service to Firebase
+        //                     servicesRef.push(service)
+        //                         .then(() => console.log("Example service added:", service.name))
+        //                         .catch(error => console.error("Error adding example service:", error));
+        //                 });
+        //                  // The loadServices listener will update the UI
+        //             }
+        //         }).catch(error => console.error("Error checking Firebase for example services:", error));
+        //     }
+        // }
+
+
+        // Initialize app on DOM ready
+        document.addEventListener('DOMContentLoaded', () => {
+            loadServices(); // Starts listening for services data from Firebase
+            // Decide if you need to add initial data using addExampleServices() here
+            // addExampleServices();
+
+             // Set initial page view to the quote page
             showPage(quotePage);
             setActiveNav(navQuote);
-            calculateTotal();
         });
-        
-        // Reset area
-        resetArea.addEventListener('click', () => {
-            if (drawnItems && map) {
-                drawnItems.clearLayers();
-                calculatedArea.textContent = '0 sq ft';
-                currentArea = 0;
-            }
-        });
-        
-        // Add example services
-        function addExampleServices() {
-            if (services.length === 0) {
-                services = [
-                    {
-                        id: '1',
-                        name: 'House Exterior Wash',
-                        priceType: 'flat',
-                        price: 150,
-                        description: 'Complete exterior house washing'
-                    },
-                    {
-                        id: '2',
-                        name: 'Driveway Cleaning',
-                        priceType: 'sqft',
-                        price: 0.40,
-                        description: 'Deep clean of concrete driveway surface'
-                    },
-                    {
-                        id: '3',
-                        name: 'Deck/Patio Cleaning',
-                        priceType: 'sqft',
-                        price: 0.50,
-                        description: 'Cleaning of wooden deck or stone patio'
-                    }
-                ];
-                saveServices();
-                renderServicesList();
-                renderServiceSelection();
-            }
-        }
-        
-        // Initialize app
-        document.addEventListener('DOMContentLoaded', () => {
-                loadServices();
-                addExampleServices();
-            });
-        };
+
     </script>
 
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-        
-        <script>
-            // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-    const firebaseConfig = {
-      apiKey: "AIzaSyDAUFXfQzSsXvwhDGJd5zhAB47xzDo7ahc",
-      authDomain: "quote-a0a90.firebaseapp.com",
-      projectId: "quote-a0a90",
-      storageBucket: "quote-a0a90.firebasestorage.app",
-      messagingSenderId: "797986357681",
-      appId: "1:797986357681:web:2f868fa59b17ccf5127d90",
-      measurementId: "G-0DWW40906C"
-    };
-    const app = firebase.initializeApp(firebaseConfig);
-    console.log("Firebase app initialized!");
-        </script>
-            
-    
-    
-        
 </body>
 </html>
